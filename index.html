@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Skill System</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#060b1a">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="mobile-web-app-capable" content="yes">
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#eef2f9;--panel:#fff;--line:#b9c6e0;--ink:#101a33;--mute:#5a6a8c;--accent:#1f5eff;--glow:rgba(31,94,255,.18);--bar:#dfe7f6;--danger:#c0334d}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#060b1a;--panel:#0b1530;--line:#1f3a7a;--ink:#e6eeff;--mute:#8aa0cf;--accent:#3d8bff;--glow:rgba(61,139,255,.28);--bar:#12234d;--danger:#ff5d7a}}
+:root[data-theme="dark"]{--bg:#060b1a;--panel:#0b1530;--line:#1f3a7a;--ink:#e6eeff;--mute:#8aa0cf;--accent:#3d8bff;--glow:rgba(61,139,255,.28);--bar:#12234d;--danger:#ff5d7a}
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*:before,*:after{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 "Chakra Petch",system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:1000px;margin:0 auto;padding:18px 16px 60px}
+section.panel,article.panel{margin-bottom:16px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:16px;box-shadow:0 0 22px var(--glow)}
+.status{display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:center}
+.rank{width:92px;height:92px;display:grid;place-items:center;font-size:54px;font-weight:700;border:2px solid var(--accent);border-radius:6px;color:var(--accent);text-shadow:0 0 14px var(--glow)}
+h1{margin:0;font-size:22px}h2{margin:0;font-size:19px}
+.big{font-size:34px;font-weight:700;line-height:1.1}
+.mute{color:var(--mute);font-size:14px}
+.bar{height:10px;background:var(--bar);border-radius:2px;overflow:hidden;margin:8px 0 4px}
+.bar>i{display:block;height:100%;background:var(--accent);box-shadow:0 0 10px var(--accent)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:14px;align-items:start}
+.grid .panel{margin:0}
+.row{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.badge{font-weight:700;font-size:24px;color:var(--accent);border:1px solid var(--accent);border-radius:4px;width:42px;height:42px;display:grid;place-items:center;flex:none}
+button,input,select,textarea{font:inherit;color:var(--ink)}
+button{min-height:44px;padding:0 14px;background:transparent;border:1px solid var(--accent);color:var(--accent);border-radius:4px;cursor:pointer}
+button:hover{background:var(--glow)}button:disabled{opacity:.4;cursor:default}
+button.solid,.tabs button.on{background:var(--accent);color:var(--on,#fff)}
+button.quiet{border-color:var(--line);color:var(--mute)}
+button.del{border-color:var(--danger);color:var(--danger)}
+input,select{min-height:44px;padding:0 10px;background:var(--bg);border:1px solid var(--line);border-radius:4px;width:100%}
+input[type=range]{padding:0;min-height:30px}input[type=checkbox]{width:24px;min-height:24px}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.quick{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.form{display:none;margin-top:12px;gap:8px;grid-template-columns:1fr 1fr}
+.form.open{display:grid}.form .full{grid-column:1/-1}
+.tabs{display:flex;gap:8px;margin:12px 0 16px}.tabs button{flex:1}
+#ban{display:none;background:var(--accent);color:var(--on,#fff);padding:10px 14px;border-radius:4px;margin-bottom:12px}
+.q{display:grid;grid-template-columns:52px 1fr auto;gap:10px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.q>span{color:var(--mute);font-weight:700}.q.ok>span{color:var(--accent)}
+.q .quick{margin:0}
+.boss{border:1px solid var(--accent);background:var(--glow);padding:10px;border-radius:4px;margin-top:10px}
+.warn{color:var(--danger);font-size:14px;margin-top:6px}
+.logs{margin-top:10px;font-size:13px;color:var(--mute)}
+.logs div{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:3px 0;border-top:1px solid var(--line)}
+.logs button{min-height:30px;padding:0 8px;font-size:12px;flex:none}
+details{margin-top:12px;border-top:1px solid var(--line);padding-top:8px}
+summary{min-height:36px;cursor:pointer;color:var(--accent);font-weight:600}
+.sub{margin-top:14px}.sub>b{display:block;margin-bottom:6px}
+.st{display:grid;grid-template-columns:1fr 1fr 28px;gap:8px;align-items:center;margin-bottom:6px}
+.radar{width:100%;max-width:240px;display:block;margin:6px auto}
+.heat{display:grid;grid-auto-flow:column;grid-template-rows:repeat(7,1fr);gap:3px;overflow-x:auto;padding-bottom:6px}
+.heat i{display:block;width:16px;height:16px;border-radius:3px;background:var(--accent)}
+.heat .h0{background:var(--bar)}.h1{opacity:.3}.h2{opacity:.55}.h3{opacity:.8}.h4{opacity:1}.hx{visibility:hidden}
+.tl div{padding:6px 0;border-top:1px solid var(--line);font-size:14px}
+.chips{display:flex;gap:8px;flex-wrap:wrap}.chips span{border:1px solid var(--accent);color:var(--accent);padding:4px 10px;border-radius:14px;font-size:14px}
+textarea{width:100%;min-height:90px;background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:8px;font:12px monospace}
+.ring{display:flex;align-items:center;gap:12px;margin-top:10px}.ring svg{width:54px;height:54px;flex:none}
+.fl{position:fixed;inset:0;background:var(--bg);display:none;place-items:center;z-index:10;text-align:center;padding:20px}.fl.on{display:grid}
+.fl .tm{font-size:min(22vw,120px);font-weight:700;color:var(--accent);display:block;line-height:1.1}
+.fl .form{max-width:420px;margin:20px auto 0;text-align:left}
+.cmp{width:100%;height:auto}.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;margin-top:6px}
+.rep table{width:100%;border-collapse:collapse;font-size:14px}.rep th,.rep td{text-align:left;padding:6px 4px;border-top:1px solid var(--line)}
+.seg{display:flex;gap:8px;margin:8px 0;flex-wrap:wrap}.seg .on{background:var(--accent);color:var(--on,#fff)}
+label.mute{display:block}
+@media print{body.pr{--ink:#000;--mute:#444;--line:#999;--bg:#fff;--panel:#fff;background:#fff;color:#000}body.pr main>:not(#app),body.pr #app>:not(.rep){display:none!important}body.pr .rep{box-shadow:none;border:0}body.pr .noprint{display:none!important}}
+#toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--accent);color:var(--on,#fff);padding:12px 18px;border-radius:6px;display:none;z-index:11;max-width:90%;text-align:center}#toast.on{display:block}
+.logo{width:28px;height:28px;vertical-align:-6px;margin-right:8px}input[readonly]{font-size:12px;margin-bottom:6px}
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;place-items:center;z-index:9;text-align:center}
+.ov.on{display:grid}
+.ov>div{padding:30px 44px;border:2px solid var(--accent);background:var(--panel);border-radius:8px;box-shadow:0 0 60px var(--accent);animation:pop .5s ease-out}
+.lu{font-size:42px;font-weight:700;color:var(--accent)}
+@keyframes pop{from{transform:scale(.6);opacity:0}to{transform:none;opacity:1}}
+@media (prefers-reduced-motion:reduce){.ov>div{animation:none}}
+@media (max-width:520px){.status{grid-template-columns:1fr}.tabs button{padding:0 4px}.q{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<main>
+  <div class="row"><h1><svg class="logo" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="14" fill="none" stroke="var(--accent)" stroke-width="2.5"/><path d="M9 17l7-6 7 6M9 23l7-6 7 6" fill="none" stroke="var(--accent)" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg>Skill System</h1><div style="display:flex;gap:8px"><button class="solid" id="inst" style="display:none">Install app</button><button class="quiet" id="theme">Switch theme</button></div></div>
+  <div class="tabs" id="tabs"></div>
+  <div id="ban" role="status"></div>
+  <div id="app"></div>
+</main>
+<div class="ov" id="ov" role="status"><div><div class="lu" id="lut">LEVEL UP</div><div id="ovt"></div></div></div>
+<div class="fl" id="fl" role="dialog" aria-label="Focus mode"></div>
+<div id="toast" role="status"></div>
+
+<script>
+(function(){
+var KEY='skillSystem.v1',MAXXP=100000,POW=1.8,CAP=180,GRACE=7;
+var RANKS=['E','D','C','B','A','S'],MAXL=[19,39,59,79,99,100];
+var T={
+'Drafting':{s:['Accuracy','Speed','Legal language','Structure'],q:'Draft or revise one document',m:30,p:'Daily: redraft one clause or document from a real file. Weekly: compare your draft with a senior lawyer\u2019s version and note every difference.',b:['Draft a rent agreement from scratch with no template','Draft a full sale deed with all clauses and schedules','Draft a plaint and written statement for one civil case','Draft a partnership deed and get it reviewed by a senior lawyer','Draft three different documents in one day to a senior lawyer\u2019s standard']},
+'Writing':{s:['Clarity','Vocabulary','Structure','Speed'],q:'Write one page',m:30,p:'Daily: write one page, then cut 10% of it. Weekly: rewrite your best page from scratch.',b:['Finish a 500-word piece in one sitting','Finish a 1,000-word piece and get it reviewed','Write a 2,000-word article and publish it','Get a piece published or place in a contest','Write a 5,000-word piece and edit it twice']},
+'Research':{s:['Accuracy','Depth','Speed','Sources'],q:'Research one question with sources',m:30,p:'Daily: answer one question and cite 3 sources. Weekly: write a one-page note.',b:['Write a one-page note with 5 verified sources','Find 3 judgments on one point and compare them','Prepare a full legal research memo','Present a memo to a senior and answer questions on it','Build a complete research file on a new topic in one day']},
+'Reading':{mode:'act',s:['Speed','Retention','Comprehension','Consistency'],q:'Read your daily pages',m:30,p:'Read every day. After each sitting, write one line about what you learned. Log your pages when you finish.',a:[{n:'Pages',u:'pages',r:1,st:10},{n:'Chapters',u:'chapters',r:10,st:1}],b:['Finish one full book','Finish a book and write a one-page summary from memory','Read five books and explain one to someone else','Read a difficult book and write a proper review','Read twenty books in a year with notes on each']},
+'Study':{s:['Focus','Retention','Revision','Consistency'],q:'Study session',m:60,p:'Study in blocks of 25 to 50 minutes with short breaks. Revise yesterday notes first. Test yourself every week.',b:['Score 70% on a mock test for one subject','Finish one full subject with your own notes','Score well on a full-length mock test','Teach a hard topic to someone without notes','Complete two full revisions of the whole syllabus']},
+'Coding':{s:['Problem solving','Speed','Code quality','Debugging'],q:'Code or solve one problem',m:45,p:'Build something small every day. Read other people code each week. Rewrite old code to make it cleaner.',b:['Build a small working program from scratch','Build a complete project with a README','Fix a bug in someone else project','Ship an app that real people use','Build and launch a larger project with tests']},
+'Language':{s:['Speaking','Listening','Vocabulary','Writing'],q:'Practise the language',m:30,p:'Speak or write a little every day. Learn 5 new words daily and use them in sentences. Record yourself weekly.',b:['Introduce yourself for 2 minutes without notes','Hold a 10-minute conversation','Write a one-page letter with few errors','Follow a news bulletin and summarise it','Talk for 30 minutes with a fluent speaker']},
+'Music practice':{s:['Technique','Timing','Memory','Expression'],q:'Practise your instrument',m:30,p:'Start slow with a metronome. Practise the hard bars, not the whole song. Record yourself every week.',b:['Play one full piece slowly without mistakes','Play it at full speed with a metronome','Learn a new piece by heart','Perform for friends or family','Perform a set of three pieces from memory']},
+'Meditation':{s:['Focus','Calm','Consistency','Awareness'],q:'Sit and meditate',m:15,p:'Same time and place every day. Start with 10 minutes. Count breaths and gently return when your mind wanders.',b:['Sit for 20 minutes without moving','Complete 30 days in a row','Sit for 45 minutes','Spend a full day in silence','Complete a 7-day retreat or equivalent']},
+'Drawing':{s:['Line control','Proportion','Shading','Speed'],q:'Draw for a set time',m:30,p:'Draw from life or reference daily. Start with quick 2-minute sketches. Redraw your weakest piece every week.',b:['Draw a clear object from life','Draw a face with correct proportions','Finish a shaded still life','Complete a full portrait','Complete a finished artwork you are proud to show']},
+'Exercise':{mode:'act',s:['Strength','Endurance','Mobility','Consistency'],q:'Hit your daily exercise target',m:40,p:'Train most days and log your reps or distance right after each set. Add a few reps each week. Hard and max-effort sets earn extra XP.',a:[{n:'Pushups',u:'reps',r:1,st:10},{n:'Squats',u:'reps',r:.8,st:20},{n:'Pull-ups',u:'reps',r:3,st:5},{n:'Running',u:'km',r:8,st:1},{n:'Plank',u:'sec',r:.2,st:30},{n:'Sit-ups',u:'reps',r:.7,st:20},{n:'Burpees',u:'reps',r:3,st:10},{n:'Walking',u:'km',r:4,st:1},{n:'Skipping',u:'jumps',r:.1,st:100}],b:['25 pushups in one set and a 2-minute plank','50 pushups in one set, 5 pull-ups and a 5 km run without stopping','75 pushups, 12 pull-ups and a 5 km run in under 30 minutes','100 pushups in one set, 20 pull-ups and a 10 km run','100 pushups, 20 pull-ups, 100 squats and a 10 km run, all in one day']},
+'Public speaking':{s:['Clarity','Confidence','Structure','Delivery'],q:'Practise speaking aloud',m:20,p:'Daily: speak 5 minutes on a topic and record it. Weekly: listen back and note 3 fixes.',b:['Give a 3-minute talk to one person','Give a 5-minute talk to a small group','Give a 10-minute talk at an event','Argue a point in a debate or hearing','Give a 20-minute talk and take questions']}
+};
+function uid(){return Math.random().toString(36).slice(2,8)+Date.now().toString(36)}
+function pad(n){return String(n).padStart(2,'0')}
+function ds(d){return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())}
+function today(){return ds(new Date())}
+function utc(s){var p=s.split('-');return Date.UTC(+p[0],+p[1]-1,+p[2])}
+function addDays(s,n){var p=s.split('-');return ds(new Date(+p[0],+p[1]-1,+p[2]+n))}
+function diff(a,b){return Math.round((utc(b)-utc(a))/864e5)}
+function monday(s){var dw=(new Date(utc(s)).getUTCDay()+6)%7;return addDays(s,-dw)}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+function need(L){return L<=1?0:MAXXP*Math.pow((L-1)/99,POW)}
+function level(xp){return Math.min(100,1+Math.floor(99*Math.pow(Math.max(xp,0)/MAXXP,1/POW)+1e-9))}
+function rank(L){return RANKS[Math.min(5,Math.floor(L/20))]}
+function fmt(d){return d<60?Math.max(1,Math.round(d))+' days':d<700?Math.round(d/30.4)+' months':(d/365).toFixed(1)+' years'}
+function el(id){return document.getElementById(id)}
+function wd(s){return (new Date(utc(s)).getUTCDay()+6)%7}
+function inRest(d){return (S.rests||[]).some(function(r){return d>=r.a&&d<=r.b})}
+function restCount(a,b){var n=0;(S.rests||[]).forEach(function(r){var lo=r.a>a?r.a:addDays(a,1),hi=r.b<b?r.b:b;if(hi>=lo)n+=diff(lo,hi)+1});return n}
+function reqFor(k,d){var q=k.qm;if(S.set.smart){var e=null;k.wfh.forEach(function(x){if(x.from<=d)e=x});if(e)q=Math.max(10,Math.round(q*e.f[wd(d)]/5)*5)}return q}
+function updFactors(){
+  if(!S.set.smart)return;
+  var m=monday(today()),from=addDays(m,-56);
+  S.skills.forEach(function(k){
+    var l=k.wfh[k.wfh.length-1];if(l&&l.from>=m)return;
+    var dm=dayMaps(k).m,sum=[0,0,0,0,0,0,0],tot=0,days=0,f=[1,1,1,1,1,1,1];
+    for(var d in dm)if(d>=from&&d<m){sum[wd(d)]+=dm[d];tot+=dm[d];days++}
+    if(days>=7){var avg=tot/7;f=sum.map(function(x){return Math.max(.5,Math.min(1.5,x/avg))})}
+    k.wfh.push({from:m,f:f});
+  });
+}
+var RC={E:['#aab4c8','#586274','#0b1020'],D:['#3fd07a','#1c8f47','#0b1020'],C:['#4d97ff','#1f5eff','#ffffff'],B:['#b07cff','#7a3fe0','#0b1020'],A:['#ffb02e','#b86e00','#0b1020'],S:['#ff5468','#c81e3a','#0b1020']};
+var rv='m0';
+function isDark(){var r=document.documentElement;return r.dataset.theme?r.dataset.theme==='dark':window.matchMedia('(prefers-color-scheme: dark)').matches}
+function rkStyle(rk){var c=RC[rk],d=isDark(),a=d?c[0]:c[1],p=[1,3,5].map(function(x){return parseInt(a.substr(x,2),16)}).join(',');return '--accent:'+a+';--glow:rgba('+p+','+(d?.28:.18)+');--line:rgba('+p+',.5);--on:'+(d?c[2]:'#ffffff')+';'}
+function ring(p,txt){var c=2*Math.PI*22;return '<svg viewBox="0 0 54 54" role="img" aria-label="'+txt+'"><circle cx="27" cy="27" r="22" fill="none" stroke="var(--bar)" stroke-width="6"/><circle cx="27" cy="27" r="22" fill="none" stroke="var(--accent)" stroke-width="6" stroke-linecap="round" stroke-dasharray="'+(c*Math.min(1,p)).toFixed(1)+' '+c.toFixed(1)+'" transform="rotate(-90 27 27)"/></svg>'}
+function wkMin(i){var w=monday(today()),s=0;for(var d in i.m)if(d>=w)s+=i.m[d];return s}
+function wgNow(i){return i.k.mode==='act'?wkMin(i):wkMin(i)/60}
+var CT={mode:'act',s:['Output','Quality','Consistency','Challenge'],q:'Reach your daily target',m:40,p:'Choose what to count (reps, pages, km). In Details, set how many XP each unit is worth. About 1 XP per minute of effort is a fair guide.',a:[{n:'Reps',u:'reps',r:1,st:10}],b:['','','','','']};
+function logAct(id,ix,c,q,note){
+  var k=K(id),a=k&&k.acts[ix];c=+c;
+  if(!a||!(c>0)||c>100000)return;
+  k.logs.push({d:today(),m:Math.round(c*a.r*10)/10,q:q,a:{n:a.n,u:a.u,c:c},note:(note||'').slice(0,100),t:Date.now()});afterChange();
+}
+function tod(I){
+  var b=[],n=0,hr;for(hr=0;hr<24;hr++)b.push(0);
+  I.forEach(function(i){i.k.logs.forEach(function(l){if(l.t){b[new Date(l.t).getHours()]+=l.m;n++}})});
+  if(n<3)return '<div class="mute">Log a few more sessions to see when you practice. This uses the time you logged each session.</div>';
+  var mx=Math.max.apply(null,b),bh=0,bs=0,svg='<svg class="cmp" viewBox="0 0 480 120" role="img" aria-label="Minutes logged by hour of day">';
+  for(hr=0;hr<24;hr++){var sm=b[hr]+b[(hr+1)%24];if(sm>bs){bs=sm;bh=hr}}
+  b.forEach(function(v,h){var ht=mx?v/mx*80:0;svg+='<rect x="'+(h*20+2)+'" y="'+(90-ht)+'" width="16" height="'+ht+'" rx="2" fill="var(--accent)"><title>'+h+':00, '+Math.round(v)+' min</title></rect>';if(h%3===0)svg+='<text x="'+(h*20+10)+'" y="108" font-size="10" text-anchor="middle" fill="var(--mute)">'+h+'</text>'});
+  return svg+'</svg><div class="mute">Your strongest two-hour window starts around '+bh+':00 (24-hour clock, based on when you logged sessions).</div>';
+}
+function revData(I){
+  var t=today(),pre,lab;
+  if(rv==='y0'){pre=t.slice(0,4);lab='This year ('+pre+')'}
+  else{var d=new Date();d.setMonth(d.getMonth()-(rv==='m1'?1:0),1);pre=ds(d).slice(0,7);lab=d.toLocaleString('en',{month:'long',year:'numeric'})}
+  var mins=0,pts=0,wk={},sk=[],ups=0,bs=[],bw=null;
+  I.forEach(function(i){
+    var m=0;for(var x in i.m)if(x.indexOf(pre)===0){m+=i.m[x];var w=monday(x);wk[w]=(wk[w]||0)+i.m[x]}
+    if(i.k.mode==='act')pts+=m;else mins+=m;sk.push({n:i.k.name,m:m,act:i.k.mode==='act'});
+    i.k.hist.forEach(function(e){if(e.d.indexOf(pre)===0)ups++});
+    i.k.bl.forEach(function(e){if(e.d.indexOf(pre)===0)bs.push(i.k.name+' rank '+RANKS[e.r])});
+  });
+  for(var w in wk)if(!bw||wk[w]>wk[bw])bw=w;
+  sk.sort(function(a,b){return b.m-a.m});
+  return {lab:lab,mins:mins,pts:pts,ups:ups,bs:bs,bw:bw,bm:bw?wk[bw]:0,top:sk[0]};
+}
+function reviewText(r){return '<p>'+(r.mins/60).toFixed(1)+' hours practised'+(r.pts?' \u00b7 '+Math.round(r.pts)+' exercise XP':'')+' \u00b7 '+r.ups+' level-up'+(r.ups===1?'':'s')+' \u00b7 '+r.bs.length+' boss challenge'+(r.bs.length===1?'':'s')+' passed'+(r.bs.length?' ('+esc(r.bs.join(', '))+')':'')+'.</p><div class="mute">'+(r.bw?'Best week: starting '+r.bw+' with '+Math.round(r.bm)+' points.':'No practice in this period yet.')+(r.top&&r.top.m?' Top skill: '+esc(r.top.n)+' ('+(r.top.act?Math.round(r.top.m)+' XP':(r.top.m/60).toFixed(1)+' hours')+').':'')+'</div>'}
+function review(I){var r=revData(I);return '<section class="panel"><b>Review</b><div class="seg noprint">'+[['m0','This month'],['m1','Last month'],['y0','This year']].map(function(p){return '<button data-per="'+p[0]+'" class="'+(rv===p[0]?'on':'quiet')+'">'+p[1]+'</button>'}).join('')+'</div><h2>'+esc(r.lab)+'</h2>'+reviewText(r)+'</section>'}
+function cmp(I){
+  var pal=['#3d8bff','#3fd07a','#ffb02e','#ff5468','#b07cff','#27d3d3'],dash=['','6 3','2 3','8 3 2 3'],d0=today(),lg='',svg;
+  I.forEach(function(i){if(i.k.cd<d0)d0=i.k.cd});
+  var span=Math.max(7,diff(d0,today())),X=function(d){return (30+diff(d0,d)/span*480).toFixed(1)},Y=function(l){return (210-l*1.9).toFixed(1)};
+  svg='<svg class="cmp" viewBox="0 0 520 240" role="img" aria-label="Skill levels over time">';
+  [0,20,40,60,80,100].forEach(function(l){svg+='<line x1="30" x2="510" y1="'+Y(l)+'" y2="'+Y(l)+'" stroke="var(--line)" stroke-dasharray="3 4"/><text x="26" y="'+(+Y(l)+3)+'" font-size="9" text-anchor="end" fill="var(--mute)">'+l+'</text>'});
+  I.forEach(function(i,n){
+    var c=pal[n%pal.length],cur=1,p=[X(i.k.cd)+','+Y(1)];
+    i.k.hist.forEach(function(e){p.push(X(e.d)+','+Y(cur));cur=e.l;p.push(X(e.d)+','+Y(cur))});
+    p.push(X(today())+','+Y(i.L));
+    svg+='<polyline points="'+p.join(' ')+'" fill="none" stroke="'+c+'" stroke-width="2.5" stroke-dasharray="'+dash[n%4]+'"/>';
+    lg+='<span style="color:'+c+'">\u25cf '+esc(i.k.name)+' (level '+i.L+')</span>';
+  });
+  return svg+'<text x="30" y="232" font-size="9" fill="var(--mute)">'+d0+'</text><text x="510" y="232" font-size="9" text-anchor="end" fill="var(--mute)">today</text></svg><div class="legend">'+lg+'</div>';
+}
+function report(I){
+  var o=overall(I),tt=titles(I),r=revData(I);
+  var h='<section class="panel rep"><div class="row noprint"><b>Progress report</b><button data-print="1">Print or save as PDF</button></div><div class="mute noprint">Opens your browser\u2019s print screen, where you can choose Save as PDF. If nothing opens, this page may be blocking printing. Try opening it directly in the browser.</div><h2>'+esc(S.name)+'\u2019s progress report</h2><div class="mute">'+today()+' \u00b7 Rank '+o.rk+' \u00b7 Level '+o.lv+' \u00b7 '+(tt.hrs/60).toFixed(1)+' hours practised</div><table><tr><th>Skill</th><th>Rank</th><th>Level</th><th>XP</th><th>Hours or XP</th><th>Streak</th></tr>';
+  I.forEach(function(i){var m=0;for(var d in i.m)m+=i.m[d];h+='<tr><td>'+esc(i.k.name)+'</td><td>'+rank(i.L)+'</td><td>'+i.L+'</td><td>'+Math.floor(i.xp)+'</td><td>'+(i.k.mode==='act'?Math.round(m)+' XP':(m/60).toFixed(1))+'</td><td>'+streakOf(i.m).n+' days</td></tr>'});
+  return h+'</table><h2 style="margin-top:14px">'+esc(r.lab)+'</h2>'+reviewText(r)+(tt.list.length?'<div class="mute">Titles: '+esc(tt.list.join(', '))+'</div>':'')+'</section>';
+}
+function openFocus(){
+  var k=K(S.timer.id);
+  el('fl').innerHTML='<div><h2>'+esc(k.name)+'</h2><span class="tm">00:00</span><div class="mute">Stay with this one task.</div><div class="form open"><select id="fq"><option value="1">Steady x1</option><option value="1.25">Focused x1.25</option><option value="1.5">Deep work x1.5</option></select><button class="quiet" data-fx="1">Leave focus mode</button><input class="full" id="fn" placeholder="What did you learn? (optional)" maxlength="100"><button class="solid full" data-stop="'+k.id+'">Stop and log</button></div></div>';
+  el('fl').className='fl on';
+  try{var p=document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen();if(p&&p.catch)p.catch(function(){})}catch(e){}
+  tick();
+}
+function closeFocus(){el('fl').className='fl';try{if(document.fullscreenElement){var p=document.exitFullscreen();if(p&&p.catch)p.catch(function(){})}}catch(e){}}
+
+
+function dayMaps(k){var m={},w={};k.logs.forEach(function(l){m[l.d]=(m[l.d]||0)+l.m;w[l.d]=(w[l.d]||0)+l.m*l.q});return {m:m,w:w}}
+function xpBase(k){var w=dayMaps(k).w,t=0;for(var d in w)t+=Math.min(CAP,w[d]);return t}
+function newSkill(nm,tp){return {id:uid(),name:nm,cd:today(),logs:[],rev:[],stats:(tp?tp.s:['Accuracy','Speed','Depth','Consistency']).map(function(n){return {n:n,v:3}}),sh:[],boss:tp?tp.b.slice():['','','','',''],bl:[],qt:tp?tp.q:'Practice session',qm:tp?tp.m:30,plan:tp?tp.p:'',wg:0,wfh:[],mode:tp&&tp.mode?tp.mode:'time',acts:tp&&tp.a?JSON.parse(JSON.stringify(tp.a)):[],hist:[],dec:[],par:null,dt:addDays(today(),-1),un:0,mx:1}}
+function migrate(s){
+  s.v=2;s.name=s.name||'Hunter';s.set=s.set||{decay:true,remind:'20:00'};if(s.set.smart==null)s.set.smart=true;s.rests=s.rests||[];if(!s.set.pace)s.set.pace='standard';if(s.set.snd==null)s.set.snd=true;if(!s.set.zoom)s.set.zoom=1;s.timer=s.timer||null;s.best=s.best||0;
+  s.skills.forEach(function(k){
+    k.id=k.id||uid();k.logs=k.logs||[];k.cd=k.cd||(k.logs[0]?k.logs[0].d:today());k.rev=k.rev||[];
+    k.stats=k.stats||[{n:'Accuracy',v:3},{n:'Speed',v:3},{n:'Depth',v:3},{n:'Consistency',v:3}];
+    k.sh=k.sh||[];k.boss=k.boss||['','','','',''];k.bl=k.bl||[];k.qt=k.qt||'Practice session';k.qm=k.qm||30;k.plan=k.plan||'';
+    k.hist=k.hist||[];k.dec=k.dec||[];k.par=k.par||null;k.wg=k.wg||0;k.wfh=k.wfh||[];k.mode=k.mode||'time';k.acts=k.acts||[];k.pz=!!k.pz;k.dt=k.dt||addDays(today(),-1);
+    if(k.un==null)k.un=Math.min(5,Math.floor(level(xpBase(k))/20));
+  });
+  return s;
+}
+function load(){var s=null;try{s=JSON.parse(localStorage.getItem(KEY))}catch(e){}if(!s||!Array.isArray(s.skills))s={skills:[]};return migrate(s)}
+var S=load(),view='today',openD={},ovTimer=null;applyPace();
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+function K(id){return S.skills.filter(function(k){return k.id===id})[0]}
+
+function streakOf(dm){
+  var keys=Object.keys(dm).sort();if(!keys.length)return {n:0,left:1};
+  var n=0,d=today(),used={},cur=true;
+  for(var g=0;g<4000;g++){
+    if(d<keys[0])break;
+    if(dm[d]){n++}else if(!cur){if(!inRest(d)){var w=monday(d);if(!used[w])used[w]=1;else break}}
+    cur=false;d=addDays(d,-1);
+  }
+  return {n:n,left:used[monday(today())]?0:1};
+}
+function calc(){
+  var I=S.skills.map(function(k){
+    var dm=dayMaps(k),b=0,qb=0,rv=0,d;
+    for(d in dm.w)b+=Math.min(CAP,dm.w[d]);
+    for(d in dm.m)if(dm.m[d]>=reqFor(k,d))qb+=10;
+    k.rev.forEach(function(r){rv+=r.s*15});
+    return {k:k,m:dm.m,w:dm.w,b:b,qb:qb,rv:rv,last:(function(){var l=k.logs.length?k.logs[k.logs.length-1].d:k.cd;return k.rs&&k.rs>l?k.rs:l})()};
+  });
+  var dates={};I.forEach(function(i){for(var d in i.m)dates[d]=1});
+  Object.keys(dates).forEach(function(d){
+    var e=I.filter(function(i){return i.k.cd<=d&&!i.k.pz});
+    if(e.length&&e.every(function(i){return (i.m[d]||0)>=reqFor(i.k,d)}))e.forEach(function(i){i.qb+=5});
+  });
+  I.forEach(function(i){i.own=i.b+i.qb+i.rv});
+  I.forEach(function(i){
+    var t=0,dc=0;
+    I.forEach(function(c){if(c.k.par===i.k.id)t+=c.own*.2});
+    i.k.dec.forEach(function(e){dc+=e.x});
+    var fd=i.k.dec.length?i.k.dec[0].d:null,nq=0,dd;if(fd)for(dd in i.m)if(dd>fd&&i.m[dd]>=reqFor(i.k,dd))nq++;i.rc=Math.min(dc*.7,nq*15);i.tree=t;i.dc=dc;i.xp=Math.max(0,i.own+t-dc+i.rc);
+    i.raw=level(i.xp);i.cap=MAXL[i.k.un];i.L=Math.min(i.raw,i.cap);
+    i.gated=i.L>=i.cap&&i.k.un<5;i.idle=Math.max(0,diff(i.last,today())-restCount(i.last,today()));
+  });
+  return I;
+}
+function allDays(I){var t={};I.forEach(function(i){for(var d in i.m)t[d]=(t[d]||0)+i.m[d]});return t}
+function applyDecay(){
+  var y=addDays(today(),-1);
+  if(!S.set.decay){S.skills.forEach(function(k){k.dt=y});return}
+  var I=calc(),ch=false;
+  I.forEach(function(i){
+    var k=i.k,xp=i.xp,fl=need(i.L>=100?100:Math.max(1,Math.floor(i.L/20)*20)),g=0;
+    while(k.dt<y&&g++<500){
+      k.dt=addDays(k.dt,1);
+      if(!k.pz&&!inRest(k.dt)&&diff(i.last,k.dt)-restCount(i.last,k.dt)>GRACE&&xp>fl){var x=Math.min(xp-fl,Math.max(2,Math.round(xp*.003)));k.dec.push({d:k.dt,x:x});xp-=x;ch=true}
+    }
+  });
+  if(ch)save();
+}
+function afterChange(){
+  var I=calc(),up=null;
+  I.forEach(function(i){
+    var k=i.k;
+    if(k.mx==null){k.mx=i.L;return}
+    if(i.L>k.mx){for(var l=k.mx+1;l<=i.L;l++)k.hist.push({d:today(),l:l});k.mx=i.L;up={n:k.name,l:i.L,r:i.L%20===0}}
+  });
+  var o=streakOf(allDays(I));if(o.n>S.best)S.best=o.n;
+  save();render();if(up)showUp(up);
+}
+function showUp(u){
+  el('lut').textContent=u.r?'RANK UP':'LEVEL UP';el('ovt').innerHTML='<h2>'+esc(u.n)+'</h2><div class="big">Level '+u.l+'</div><div class="mute">Rank '+rank(u.l)+'</div>';
+  el('ov').className='ov on';clearTimeout(ovTimer);ovTimer=setTimeout(function(){el('ov').className='ov'},3500);
+  try{if(S.set.snd===false)throw 0;var C=window.AudioContext||window.webkitAudioContext,a=new C(),t=a.currentTime;
+    [523,659,784,1047].forEach(function(f,i){var o=a.createOscillator(),g=a.createGain();o.type='triangle';o.frequency.value=f;g.gain.setValueAtTime(.12,t+i*.12);g.gain.exponentialRampToValueAtTime(.001,t+i*.12+.25);o.connect(g);g.connect(a.destination);o.start(t+i*.12);o.stop(t+i*.12+.3)})}catch(e){}
+}
+function log(id,m,q,note){
+  m=Math.round(m);if(!(m>0)||m>600)return;
+  K(id).logs.push({d:today(),m:m,q:q,note:(note||'').slice(0,100),t:Date.now()});afterChange();
+}
+
+function overall(I){var n=I.length,sl=0,sx=0;I.forEach(function(i){sl+=i.L;sx+=i.xp});var a=n?sl/n:1;return {n:n,avg:a,lv:1+sl-n,sx:sx,rk:rank(Math.round(a))}}
+function status(I){
+  var o=overall(I);
+  return '<section class="panel status"><div class="rank">'+o.rk+'</div><div><div class="big">Level '+o.lv+'</div><div class="mute">'+(o.n?'Average skill level '+o.avg.toFixed(1)+' across '+o.n+' skill'+(o.n>1?'s':''):'Add a skill to begin')+'</div><div class="bar"><i style="width:'+Math.min(100,o.avg)+'%"></i></div><div class="mute">'+Math.floor(o.sx)+' total XP. Overall level adds up every skill level you gain.</div></div></section>';
+}
+function radar(st){
+  var n=st.length,c=110,r=78,g='',p=[],lab='',j,a;
+  for(var ring=1;ring<=4;ring++){var q=[];for(j=0;j<n;j++){a=-Math.PI/2+j*2*Math.PI/n;q.push((c+Math.cos(a)*r*ring/4).toFixed(1)+','+(c+Math.sin(a)*r*ring/4).toFixed(1))}g+='<polygon points="'+q.join(' ')+'" fill="none" stroke="var(--line)"/>'}
+  st.forEach(function(s,j){var a=-Math.PI/2+j*2*Math.PI/n;p.push((c+Math.cos(a)*r*s.v/10).toFixed(1)+','+(c+Math.sin(a)*r*s.v/10).toFixed(1));lab+='<text x="'+(c+Math.cos(a)*(r+18)).toFixed(1)+'" y="'+(c+Math.sin(a)*(r+14)+4).toFixed(1)+'" text-anchor="middle" font-size="11" fill="var(--mute)">'+esc(s.n)+'</text>'});
+  return '<svg class="radar" viewBox="0 0 220 220" role="img" aria-label="Radar chart of skill stats">'+g+'<polygon points="'+p.join(' ')+'" fill="var(--glow)" stroke="var(--accent)" stroke-width="2"/>'+lab+'</svg>';
+}
+function proj(i){
+  var t=today(),days=Math.min(28,Math.max(7,diff(i.k.cd,t)+1)),from=addDays(t,-27),s=0;
+  for(var d in i.w)if(d>=from&&d<=t)s+=Math.min(CAP,i.w[d])+((i.m[d]||0)>=reqFor(i.k,d)?10:0);
+  var pace=s/days;if(pace<1)return 'Not enough recent practice to project. Log sessions this month to see an estimate.';
+  if(i.L>=100)return 'Max level reached.';
+  var nx=Math.min(100,(Math.floor(i.L/20)+1)*20);
+  return 'Rank '+rank(nx)+' in about '+fmt(Math.max(0,need(nx)-i.xp)/pace)+'. S rank in about '+fmt(Math.max(0,MAXXP-i.xp)/pace)+' at '+Math.round(pace)+' XP a day, if boss challenges are passed on time.';
+}
+
+function card(i){
+  var k=i.k,L=i.L,lo=need(L),hi=need(Math.min(100,L+1)),open=!!openD[k.id],tm=S.timer&&S.timer.id===k.id,st=streakOf(i.m);
+  var pct=(i.gated||L>=100)?100:Math.max(0,Math.min(100,(i.xp-lo)/(hi-lo)*100));
+  var h='<article class="panel" style="'+rkStyle(rank(L))+'"><div class="row"><div><h2>'+esc(k.name)+'</h2><div class="mute">Level '+L+' of 100 \u00b7 '+st.n+' day streak \u00b7 rest day '+(st.left?'ready':'used this week')+'</div></div><div class="badge">'+rank(L)+'</div></div>';
+  h+='<div class="bar"><i style="width:'+pct.toFixed(1)+'%"></i></div><div class="mute">'+(i.gated?'Level cap reached. Pass the boss challenge to continue.':L>=100?'Max level reached':Math.ceil(hi-i.xp)+' XP to level '+(L+1))+' \u00b7 '+Math.floor(i.xp)+' XP total</div>';
+  if(i.tree>0)h+='<div class="mute">Includes '+Math.floor(i.tree)+' XP from linked skills</div>';
+  if(k.wg>0){var wm=wkMin(i);h+='<div class="ring">'+ring(wgNow(i)/k.wg,'Weekly goal progress')+'<div><b>Weekly goal</b><div class="mute">'+wgNow(i).toFixed(1)+' of '+k.wg+' '+(k.mode==='act'?'XP':'hours')+' this week</div></div></div>'}
+  if(i.gated)h+='<div class="boss"><b>Boss challenge for rank '+RANKS[k.un+1]+'</b><div>'+(k.boss[k.un]?esc(k.boss[k.un]):'No challenge set yet. Write one in Details.')+'</div><div class="quick"><button class="solid" data-pass="'+k.id+'">Mark as passed</button></div></div>';
+  if(k.pz)h+='<div class="mute">Paused. No quests or decay until you resume.</div>';else if(inRest(today()))h+='<div class="mute">Rest mode is on. Decay is paused.</div>';else if(S.set.decay){
+    if(i.idle>GRACE)h+='<div class="warn">Decaying: idle '+i.idle+' days, '+Math.floor(i.dc)+' XP lost so far. Log a session to stop it.</div>';
+    else if(i.idle>=4)h+='<div class="warn">Idle '+i.idle+' days. XP decay starts after '+GRACE+' idle days.</div>';
+  }
+  if(i.dc>0)h+='<div class="mute">Comeback quest: each day you hit your quest after a decay wins back 15 XP, up to 70% of what you lost. Recovered '+Math.floor(i.rc)+' of '+Math.floor(i.dc*.7)+' XP.</div>';
+  if(tm)h+='<div class="sub"><b>Timer running: <span class="tm">00:00</span></b><div class="form open"><select id="tq"><option value="1">Steady x1</option><option value="1.25">Focused x1.25</option><option value="1.5">Deep work x1.5</option></select><button class="quiet" data-cancel="1">Cancel timer</button><input class="full" id="tn" placeholder="What did you learn? (optional)" maxlength="100"><button class="full" data-focus="1">Focus mode</button><button class="solid full" data-stop="'+k.id+'">Stop and log</button></div></div>';
+  else if(k.mode==='act')h+='<div class="quick">'+k.acts.slice(0,5).map(function(a,ix){return '<button data-qa="'+k.id+':'+ix+'">+'+a.st+' '+esc(a.n)+'</button>'}).join('')+'<button class="solid" data-open="'+k.id+'">Log reps</button></div>';
+  else h+='<div class="quick"><button data-q="'+k.id+':15">+15 min</button><button data-q="'+k.id+':30">+30 min</button><button data-q="'+k.id+':60">+60 min</button><button class="solid" data-start="'+k.id+'"'+(S.timer?' disabled':'')+'>Start timer</button><button class="quiet" data-open="'+k.id+'">Custom</button></div>';
+  h+='<div class="form" id="f'+k.id+'">'+(k.mode==='act'?'<select class="full" id="a'+k.id+'">'+k.acts.map(function(a,ix){return '<option value="'+ix+'">'+esc(a.n)+' ('+esc(a.u)+')</option>'}).join('')+'</select>':'')+'<input type="number" step="any" min="1" max="'+(k.mode==='act'?100000:600)+'" placeholder="'+(k.mode==='act'?'How many?':'Minutes')+'" id="m'+k.id+'"><select id="q'+k.id+'">'+(k.mode==='act'?'<option value="1">Normal x1</option><option value="1.25">Hard x1.25</option><option value="1.5">Max effort x1.5</option>':'<option value="1">Steady x1</option><option value="1.25">Focused x1.25</option><option value="1.5">Deep work x1.5</option>')+'</select><input class="full" id="n'+k.id+'" placeholder="What did you learn? (optional)" maxlength="100"><button class="solid full" data-save="'+k.id+'">Log session</button></div>';
+  h+='<div class="logs">'+k.logs.slice(-3).reverse().map(function(l){var ix=k.logs.indexOf(l);return '<div><span>'+esc(l.d)+' \u00b7 '+(l.a?l.a.c+' '+esc(l.a.n)+' ('+l.m+' XP)':l.m+' min')+' x'+l.q+(l.note?' \u00b7 '+esc(l.note):'')+'</span><button class="quiet" data-undo="'+k.id+':'+ix+'" aria-label="Remove this entry">Undo</button></div>'}).join('')+'</div>';
+  h+='<details data-det="'+k.id+'"'+(open?' open':'')+'><summary>Details</summary>';
+  h+='<div class="sub"><b>Boss challenges</b>';
+  for(var r=0;r<5;r++)h+='<div class="mute">'+RANKS[r+1]+' rank: '+(r<k.un?'passed \u2713 '+esc(k.boss[r]):(r===k.un?'next':'locked'))+'</div>'+(r>=k.un?'<input data-boss="'+k.id+':'+r+'" value="'+esc(k.boss[r])+'" placeholder="Describe the real task for rank '+RANKS[r+1]+'" maxlength="140" aria-label="Boss challenge for rank '+RANKS[r+1]+'" style="margin-bottom:6px">':'');
+  h+='</div><div class="sub"><b>Stats (rate yourself 1 to 10 each month)</b>'+radar(k.stats);
+  k.stats.forEach(function(s,j){h+='<div class="st"><input data-sn="'+k.id+':'+j+'" value="'+esc(s.n)+'" maxlength="20" aria-label="Stat name"><input type="range" min="1" max="10" value="'+s.v+'" data-sv="'+k.id+':'+j+'" aria-label="'+esc(s.n)+' rating"><b>'+s.v+'</b></div>'});
+  var ls=k.sh.length?k.sh[k.sh.length-1].d:null;
+  h+='<div class="mute">'+(ls?'Last saved '+ls+(diff(ls,today())>=30?'. Rating is due.':''):'No rating saved yet.')+'</div><div class="quick"><button data-ssave="'+k.id+'">Save this month\u2019s rating</button></div></div>';
+  h+='<div class="sub"><b>Daily quest</b><div class="st" style="grid-template-columns:2fr 1fr"><input data-qt="'+k.id+'" value="'+esc(k.qt)+'" maxlength="60" aria-label="Quest text"><input type="number" min="5" max="240" data-qm="'+k.id+'" value="'+k.qm+'" aria-label="Quest minutes"></div><div class="mute">Base target in '+(k.mode==='act'?'XP points (40 points is about 40 pushups).':'minutes.')+(S.set.smart?' Smart quests adjust it by weekday.':'')+'</div></div>';
+  if(k.mode==='act'){h+='<div class="sub"><b>Activities</b><div class="mute">Boxes: name, unit, XP per unit, quick-add amount. About 1 XP is 1 minute of effort. Changing a rate only affects future logs.</div>';k.acts.forEach(function(a,ix){h+='<div class="st" style="grid-template-columns:1fr 1fr"><input data-an="'+k.id+':'+ix+':n" value="'+esc(a.n)+'" maxlength="24" aria-label="Activity name"><input data-an="'+k.id+':'+ix+':u" value="'+esc(a.u)+'" maxlength="10" aria-label="Unit"><input type="number" step="any" min="0.01" data-an="'+k.id+':'+ix+':r" value="'+a.r+'" aria-label="XP per unit"><input type="number" step="any" min="1" data-an="'+k.id+':'+ix+':st" value="'+a.st+'" aria-label="Quick add amount"><button class="del" data-adel="'+k.id+':'+ix+'" style="grid-column:1/-1">Remove '+esc(a.n)+'</button></div>'});h+='<div class="quick"><button data-aadd="'+k.id+'">Add activity</button></div></div>'}
+  h+='<div class="sub"><b>Weekly goal ('+(k.mode==='act'?'XP':'hours')+', 0 for none)</b><input type="number" min="0" max="'+(k.mode==='act'?5000:80)+'" step="0.5" data-wg="'+k.id+'" value="'+k.wg+'"></div>';
+  var hasKids=S.skills.some(function(c){return c.par===k.id}),opts=S.skills.filter(function(p){return p.id!==k.id&&!p.par});
+  if(!hasKids&&opts.length)h+='<div class="sub"><b>Feeds into</b><select data-par="'+k.id+'"><option value="">Nothing</option>'+opts.map(function(p){return '<option value="'+p.id+'"'+(k.par===p.id?' selected':'')+'>'+esc(p.name)+'</option>'}).join('')+'</select><div class="mute">The linked skill gets 20% of this skill\u2019s XP as a bonus.</div></div>';
+  if(k.plan)h+='<div class="sub"><b>Starter plan</b><div class="mute">'+esc(k.plan)+'</div></div>';
+  var nl=k.logs.map(function(l,ix){return {l:l,ix:ix}}).slice(-10).reverse();
+  if(nl.length)h+='<div class="sub"><b>Recent sessions</b><div class="logs">'+nl.map(function(x){return '<div><span>'+esc(x.l.d)+': '+(x.l.a?x.l.a.c+' '+esc(x.l.a.n):x.l.m+' min')+(x.l.note?' \u00b7 '+esc(x.l.note):'')+'</span><button class="quiet" data-undo="'+k.id+':'+x.ix+'" aria-label="Remove this session">Remove</button></div>'}).join('')+'</div></div>';
+  h+='<div class="quick"><button class="quiet" data-pz="'+k.id+'">'+(k.pz?'Resume skill':'Pause skill')+'</button><button class="del" data-del="'+k.id+'">Remove skill</button></div></details></article>';
+  return h;
+}
+
+function tToday(I){
+  var h=status(I),t=today(),wk=monday(t);if(inRest(t))h+='<section class="panel"><b>Rest mode is on</b><div class="mute">Decay is paused and missed days will not break your streaks.</div></section>';
+  if(!I.length)return h+'<section class="panel"><h2>Welcome</h2><p>Practise a skill, earn XP, and level up from E rank to S rank. Each rank-up needs a real boss challenge that you set yourself. Quests, streaks and rest days keep you steady. Pick your first skill to begin. You can add more later in the Skills tab.</p><input id="wname" placeholder="Your name (optional)" maxlength="30" style="margin-bottom:10px"><div class="quick">'+Object.keys(T).map(function(n){return '<button data-qs="'+esc(n)+'">'+esc(n)+'</button>'}).join('')+'</div></section>';
+  h+='<section class="panel"><b>Daily quests</b><div class="mute">Finish a quest for +10 XP. Clear every quest in a day for +5 XP more on each skill.</div>';
+  I.filter(function(i){return !i.k.pz}).forEach(function(i){var m=Math.round(i.m[t]||0),rq=reqFor(i.k,t),ok=m>=rq;
+    h+='<div class="q'+(ok?' ok':'')+'"><span>'+(ok?'Done':'Open')+'</span><div><b>'+esc(i.k.name)+'</b>: '+esc(i.k.qt)+(rq!==i.k.qm?' <span class="mute">(smart target)</span>':'')+'<div class="bar"><i style="width:'+Math.min(100,m/rq*100)+'%"></i></div><span class="mute">'+m+' / '+rq+' '+(i.k.mode==='act'?'XP':'min')+' today</span></div><div class="quick">'+(i.k.mode==='act'?i.k.acts.slice(0,2).map(function(a,ix){return '<button data-qa="'+i.k.id+':'+ix+'">+'+a.st+' '+esc(a.n)+'</button>'}).join(''):'<button data-q="'+i.k.id+':15">+15</button><button data-q="'+i.k.id+':30">+30</button>')+'</div></div>'});
+  h+='</section>';
+  var gs=I.filter(function(i){return i.k.wg>0});
+  if(gs.length){h+='<section class="panel"><b>Weekly goals</b>';gs.forEach(function(i){var wm=wkMin(i);h+='<div class="ring">'+ring(wgNow(i)/i.k.wg,esc(i.k.name)+' weekly goal')+'<div><b>'+esc(i.k.name)+'</b><div class="mute">'+wgNow(i).toFixed(1)+' of '+i.k.wg+' '+(i.k.mode==='act'?'XP':'hours')+' this week'+(wgNow(i)>=i.k.wg?'. Goal reached.':'')+'</div></div></div>'});h+='</section>'}
+  var due=I.filter(function(i){return !i.k.pz&&!i.k.rev.some(function(r){return r.w===wk})});
+  if(due.length){h+='<section class="panel"><b>Weekly review</b><div class="mute">Score your best work this week from 1 (weak) to 5 (excellent). Each point adds 15 XP, once a week per skill.</div>';
+    due.forEach(function(i){h+='<div class="q" style="grid-template-columns:1fr auto"><div><b>'+esc(i.k.name)+'</b></div><div class="quick">'+[1,2,3,4,5].map(function(s){return '<button data-rv="'+i.k.id+':'+s+'" aria-label="Score '+s+' for '+esc(i.k.name)+'">'+s+'</button>'}).join('')+'</div></div>'});h+='</section>'}
+  var tl=0;I.forEach(function(i){tl+=i.k.logs.length});
+  if(tl>=5&&(!S.lb||diff(S.lb,t)>14))h+='<section class="panel"><b>Back up your data</b><div class="mute">Your progress is stored only in this browser. '+(S.lb?'Last backup was '+diff(S.lb,t)+' days ago.':'You have never made a backup.')+' Copy a backup and keep it somewhere safe.</div><div class="quick"><button data-tab="hunter">Go to backup</button></div></section>';
+  var sd=I.filter(function(i){return !i.k.sh.length||diff(i.k.sh[i.k.sh.length-1].d,t)>=30});
+  if(sd.length)h+='<section class="panel"><b>Monthly stat rating due</b><div class="mute">'+sd.map(function(i){return esc(i.k.name)}).join(', ')+'. Open Skills, then Details, to rate yourself.</div></section>';
+  return h;
+}
+function tSkills(I){
+  var h='<section class="panel"><div class="row" style="flex-wrap:wrap"><select id="tpl" style="flex:1;min-width:170px"><option value="">Custom timed skill</option>'+Object.keys(T).map(function(n){return '<option>'+n+'</option>'}).join('')+'<option value="__count">Custom count-based skill</option></select><input id="newname" placeholder="Skill name" maxlength="40" style="flex:2;min-width:170px"><button class="solid" data-add="1">Add skill</button></div><p class="mute" id="plan">Pick a starter template to get a daily quest, stats, a practice plan and boss challenges. Or add a custom skill and write your own.</p></section><div class="grid">';
+  I.forEach(function(i){h+=card(i)});
+  return h+'</div>';
+}
+function heat(I){
+  var tot=allDays(I),t=today(),d=addDays(monday(t),-19*7),h='<div class="heat" role="img" aria-label="Practice heatmap, last 20 weeks">';
+  for(var n=0;n<140;n++,d=addDays(d,1)){
+    if(d>t){h+='<i class="hx"></i>';continue}
+    var m=tot[d]||0,lv=m===0?0:m<30?1:m<60?2:m<120?3:4;
+    h+='<i class="h'+lv+'" title="'+d+': '+Math.round(m)+' points"></i>';
+  }
+  return h+'</div><div class="mute">Each square is a day (columns are weeks, Monday to Sunday). Darker means more points (1 minute of practice or 1 XP of exercise).</div>';
+}
+function tGrowth(I){
+  if(!I.length)return '<section class="panel"><b>Growth</b><p class="mute">Add a skill and log sessions to see your growth.</p></section>';
+  var t=today(),wk=monday(t),lw=addDays(wk,-7),tot=allDays(I),h='<section class="panel"><b>Practice heatmap</b>'+heat(I)+'</section><section class="panel"><b>When you practice</b>'+tod(I)+'</section><section class="panel"><b>Skill levels over time</b>'+cmp(I)+'</section>';
+  var rows=I.map(function(i){var a=0,b=0;for(var d in i.m){if(d>=wk&&d<=t)a+=i.m[d];else if(d>=lw&&d<wk)b+=i.m[d]}return {n:i.k.name,a:a,b:b,act:i.k.mode==='act'}});
+  var ta=0,tb=0,dd=0;var xa=0;rows.forEach(function(r){if(r.act)xa+=r.a;else{ta+=r.a;tb+=r.b}});for(var d in tot)if(d>=wk&&d<=t)dd++;
+  var best=rows.slice().sort(function(x,y){return y.a-x.a})[0],weak=rows.slice().sort(function(x,y){return x.a-y.a})[0];
+  h+='<section class="panel"><b>This week</b><p>'+(ta/60).toFixed(1)+' hours of timed practice'+(xa?' and '+Math.round(xa)+' exercise XP':'')+' over '+dd+' day'+(dd===1?'':'s')+'. Last week: '+(tb/60).toFixed(1)+' hours.</p><div class="mute">Best skill: '+esc(best.n)+' ('+Math.round(best.a)+' points).'+(rows.length>1?' Weakest: '+esc(weak.n)+' ('+Math.round(weak.a)+' points).':'')+'</div></section>';
+  h+='<section class="panel"><b>Projection</b>'+I.map(function(i){return '<div class="sub"><b>'+esc(i.k.name)+'</b><div class="mute">'+proj(i)+'</div></div>'}).join('')+'</section>';
+  var ev=[];I.forEach(function(i){i.k.hist.forEach(function(x){ev.push({d:x.d,s:i.k.name+': reached level '+x.l+(x.l%20===0?' (rank '+rank(x.l)+')':'')})});i.k.bl.forEach(function(x){ev.push({d:x.d,s:i.k.name+': passed the boss for rank '+RANKS[x.r]})})});
+  ev.sort(function(a,b){return a.d<b.d?1:-1});
+  h+='<section class="panel"><b>Level-up history</b><div class="tl">'+(ev.length?ev.slice(0,30).map(function(e){return '<div>'+esc(e.d)+' \u00b7 '+esc(e.s)+'</div>'}).join(''):'<div class="mute">No level-ups yet. Your first one is close.</div>')+'</div></section>';
+  h+=review(I)+report(I);
+  return h;
+}
+function titles(I){
+  var L=[],hrs=0,boss=false,top=0;
+  I.forEach(function(i){var m=0;for(var d in i.m)m+=i.m[d];if(i.k.mode==='act'){[5000,25000,100000].forEach(function(x){if(m>=x)L.push(i.k.name+': '+x+' XP')})}else{hrs+=m;[100,500,1000].forEach(function(h){if(m>=h*60)L.push(i.k.name+': '+h+' hours')})}if(i.k.bl.length)boss=true;if(i.L>top)top=i.L});
+  if(I.some(function(i){return i.k.logs.length}))L.unshift('First step');
+  [7,30,100].forEach(function(b){if(S.best>=b)L.push(b+'-day streak')});
+  if(boss)L.push('Boss slayer');
+  [20,40,60,80].forEach(function(l){if(top>=l)L.push('Rank '+rank(l)+' reached')});
+  return {list:L,hrs:hrs};
+}
+function tHunter(I){
+  var o=overall(I),tt=titles(I),top=I.slice().sort(function(a,b){return b.L-a.L||b.xp-a.xp}).slice(0,3);
+  var h='<section class="panel status"><div class="rank">'+o.rk+'</div><div><input id="hname" value="'+esc(S.name)+'" maxlength="30" aria-label="Your name" style="font-size:22px;font-weight:700"><div class="big">Level '+o.lv+'</div><div class="mute">'+(tt.hrs/60).toFixed(1)+' hours practised \u00b7 best streak '+S.best+' days</div></div></section>';
+  h+='<section class="panel"><b>Top skills</b>'+(top.length?top.map(function(i){return '<div class="q" style="grid-template-columns:44px 1fr auto"><span>'+rank(i.L)+'</span><b>'+esc(i.k.name)+'</b><span class="mute">Level '+i.L+'</span></div>'}).join(''):'<p class="mute">No skills yet.</p>')+'</section>';
+  h+='<section class="panel"><b>Rank colors</b><div class="mute">The whole app takes the colour of your overall rank, and each skill card uses its own rank colour.</div><div class="chips" style="margin-top:8px">'+RANKS.map(function(r){var a=RC[r][isDark()?0:1];return '<span style="color:'+a+';border-color:'+a+'">'+r+' rank'+(r===o.rk?' (you)':'')+'</span>'}).join('')+'</div></section>';
+  h+='<section class="panel"><b>Titles</b><div class="chips" style="margin-top:8px">'+(tt.list.length?tt.list.map(function(x){return '<span>'+esc(x)+'</span>'}).join(''):'<span class="mute" style="border:0">Log your first session to earn a title.</span>')+'</div></section>';
+  h+='<section class="panel"><b>Settings</b><div class="q" style="grid-template-columns:28px 1fr"><input type="checkbox" id="dec"'+(S.set.decay?' checked':'')+' aria-label="Decay penalty"><div>Decay penalty<div class="mute">After 7 idle days a skill loses 0.3% of its XP a day (at least 2 XP). It never drops below the start of its current rank, and ranks are never lost.</div></div></div><div class="q" style="grid-template-columns:1fr 160px"><div>Pace<div class="mute">How much XP it takes to reach S rank. Changing it recalculates every level, so choose once.</div></div><select id="pace"><option value="relaxed"'+(S.set.pace==='relaxed'?' selected':'')+'>Relaxed (about 7 years)</option><option value="standard"'+(S.set.pace==='standard'?' selected':'')+'>Standard (about 5 years)</option><option value="fast"'+(S.set.pace==='fast'?' selected':'')+'>Fast (about 3 years)</option></select></div><div class="q" style="grid-template-columns:1fr 160px"><div>Text size</div><select id="zoom"><option value="1"'+(S.set.zoom==1?' selected':'')+'>Normal</option><option value="1.15"'+(S.set.zoom==1.15?' selected':'')+'>Large</option><option value="1.3"'+(S.set.zoom==1.3?' selected':'')+'>Extra large</option></select></div><div class="q" style="grid-template-columns:28px 1fr"><input type="checkbox" id="snd"'+(S.set.snd!==false?' checked':'')+' aria-label="Level-up sound"><div>Level-up sound</div></div><div class="q" style="grid-template-columns:28px 1fr"><input type="checkbox" id="smart"'+(S.set.smart?' checked':'')+' aria-label="Smart daily quests"><div>Smart daily quests<div class="mute">Your quest time rises or falls by weekday, based on your last 8 weeks. It needs at least 7 practice days of history and updates every Monday.</div></div></div><div class="q" style="grid-template-columns:1fr 130px"><div>Daily check-in time<div class="mute">After this time, a banner reminds you about open quests while this page is open.</div></div><input type="time" id="rem" value="'+esc(S.set.remind)+'"></div><div class="mute">Rest days: each week one missed day will not break your streak.</div></section>';
+  h+='<section class="panel"><b>How it works</b><p class="mute">Practise a skill and log it. Each minute, rep or page earns XP, and XP raises the skill level from 1 to 100.</p><p class="mute">Ranks go E, D, C, B, A, S. You pass each rank at level 20, 40, 60 and 80, and each rank-up needs a boss challenge that you complete in real life.</p><p class="mute">Daily quests give bonus XP, and one missed day a week is forgiven. After 7 idle days a skill slowly loses XP, unless you use Rest mode or pause the skill.</p><p class="mute">Be honest when you log. The system only helps if the numbers are true.</p></section><section class="panel"><b>Share your card</b><div class="mute">Makes a picture with your rank, name and top skills.</div><div class="quick"><button data-share="1">Share my card</button></div><div id="shareimg"></div></section>';
+  h+=linksPanel();
+  h+='<section class="panel"><b>Rest mode</b><div class="mute">Pause decay and streak penalties for exams, illness or travel. Set the dates in advance. The reminder banner is paused too.</div><div class="form open" style="margin-top:10px"><label class="mute">From<input type="date" id="ra"></label><label class="mute">To<input type="date" id="rb"></label><button class="solid full" data-rest="1">Add rest period</button></div><div class="logs">'+S.rests.map(function(r,ix){return '<div><span>'+esc(r.a)+' to '+esc(r.b)+'</span><button class="quiet" data-rdel="'+ix+'">Remove</button></div>'}).join('')+'</div></section>';
+  h+='<section class="panel"><b>Backup</b><p class="mute">Your data is saved in this browser only. Copy the backup text and keep it somewhere safe. To restore, paste it and press Restore.</p><textarea id="backup" placeholder="Backup text appears here"></textarea><div class="quick"><button data-exp="1">Show backup</button><button data-imp="1">Restore from pasted text</button><button class="quiet" data-csv="1">Show logs as CSV</button></div><div class="mute" id="msg" style="min-height:20px"></div><p class="mute">XP rules: 1 minute = 1 XP, times quality (1, 1.25 or 1.5). Each skill counts up to 180 XP a day. Level 100 (S rank) needs '+MAXXP.toLocaleString('en-IN')+' XP, about '+(MAXXP/55/365).toFixed(1)+' years at 55 minutes a day. Each level costs more than the last. Every rank-up also needs its boss challenge.</p></section>';
+  return h;
+}
+function banner(I){
+  var b=el('ban'),n=new Date(),hm=pad(n.getHours())+':'+pad(n.getMinutes()),t=today(),op=I.filter(function(i){return !i.k.pz&&(i.m[t]||0)<reqFor(i.k,t)});
+  if(op.length&&!inRest(t)&&S.set.remind&&hm>=S.set.remind){b.style.display='block';b.textContent='Check-in time: '+op.length+' daily quest'+(op.length>1?'s':'')+' still open ('+op.map(function(i){return i.k.name}).join(', ')+').'}
+  else b.style.display='none';
+}
+function tick(){
+  if(!S.timer)return;
+  var s=Math.floor((Date.now()-S.timer.start)/1000),h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=(h?h+':':'')+pad(m)+':'+pad(s%60);
+  var e=document.querySelectorAll('.tm');for(var i=0;i<e.length;i++)e[i].textContent=x;
+}
+function render(){
+  var I=calc();document.documentElement.style.cssText=rkStyle(overall(I).rk);document.body.style.zoom=S.set.zoom||1;if(!S.timer)el('fl').className='fl';banner(I);
+  el('tabs').innerHTML=[['today','Today'],['skills','Skills'],['growth','Growth'],['hunter','Hunter']].map(function(t){return '<button data-tab="'+t[0]+'" class="'+(view===t[0]?'on':'')+'">'+t[1]+'</button>'}).join('');
+  el('app').innerHTML=view==='today'?tToday(I):view==='skills'?tSkills(I):view==='growth'?tGrowth(I):tHunter(I);
+  tick();
+}
+
+function applyPace(){MAXXP={relaxed:150000,standard:100000,fast:60000}[S.set.pace]||100000}
+function shareCard(){
+  var I=calc(),o=overall(I),c=document.createElement('canvas');c.width=c.height=1080;
+  var g=c.getContext&&c.getContext('2d');if(!g)return;
+  g.fillStyle='#060b1a';g.fillRect(0,0,1080,1080);
+  g.strokeStyle=RC[o.rk][0];g.lineWidth=10;g.strokeRect(40,40,1000,1000);
+  g.textAlign='center';g.fillStyle=RC[o.rk][0];g.font='bold 360px sans-serif';g.fillText(o.rk,540,420);
+  g.fillStyle='#e6eeff';g.font='bold 72px sans-serif';g.fillText(S.name,540,540);
+  g.font='56px sans-serif';g.fillText('Level '+o.lv,540,620);
+  g.textAlign='left';g.font='44px sans-serif';
+  var y=740;I.slice().sort(function(a,b){return b.L-a.L||b.xp-a.xp}).slice(0,3).forEach(function(i){g.fillStyle=RC[rank(i.L)][0];g.fillText(rank(i.L)+'   '+i.k.name+'   Lv '+i.L,160,y);y+=70});
+  g.textAlign='center';g.fillStyle='#8aa0cf';g.font='32px sans-serif';g.fillText('Skill System',540,1010);
+  c.toBlob(function(b){
+    if(!b)return;var f=new File([b],'skill-card.png',{type:'image/png'});
+    if(navigator.canShare&&navigator.canShare({files:[f]})){navigator.share({files:[f],title:'My Skill System card'}).catch(function(){})}
+    else{el('shareimg').innerHTML='<img src="'+URL.createObjectURL(b)+'" alt="Your skill card" style="max-width:100%;border-radius:6px;margin-top:10px"><div class="mute">Press and hold the picture to save or share it.</div>'}
+  });
+}
+var dp=null,toastT=null;
+function say(m){var t=el('toast');t.textContent=m;t.className='on';clearTimeout(toastT);toastT=setTimeout(function(){t.className=''},4500)}
+function handleParams(){
+  var p,msg='';try{p=new URLSearchParams(location.search)}catch(e){return ''}
+  var tb=p.get('tab'),q=p.get('q');
+  if(['today','skills','growth','hunter'].indexOf(tb)>-1)view=tb;
+  if(q){
+    var last=null;try{last=JSON.parse(localStorage.getItem('ss.lastq'))}catch(e){}
+    if(last&&last.q===q&&Date.now()-last.t<10000)msg='That link was just used, so it was not logged twice.';
+    else{
+      try{localStorage.setItem('ss.lastq',JSON.stringify({q:q,t:Date.now()}))}catch(e){}
+      var pt=q.split(':'),nm=pt[0].trim().toLowerCase(),k=S.skills.filter(function(x){return x.name.toLowerCase()===nm})[0];
+      if(!k)msg='No skill named "'+pt[0]+'". Nothing was logged.';
+      else if(k.mode==='act'){
+        var an=(pt[1]||'').trim().toLowerCase(),a=k.acts.filter(function(x){return x.n.toLowerCase()===an})[0];
+        if(!a)msg='No activity "'+pt[1]+'" in '+k.name+'. Nothing was logged.';
+        else{var c=+pt[2]||a.st;k.logs.push({d:today(),m:Math.round(c*a.r*10)/10,q:1,a:{n:a.n,u:a.u,c:c},note:'',t:Date.now()});msg='Logged '+c+' '+a.n+' to '+k.name+'.'}
+      }else{
+        var n=Math.round(+pt[1]);
+        if(!(n>0&&n<=600))msg='Bad minutes in that link. Nothing was logged.';
+        else{k.logs.push({d:today(),m:n,q:1,note:'',t:Date.now()});msg='Logged '+n+' min to '+k.name+'.'}
+      }
+    }
+  }
+  if(q||tb){try{history.replaceState(null,'',location.pathname+(tb?'?tab='+tb:''))}catch(e){}}
+  return msg;
+}
+function linksPanel(){
+  var base=location.href.split('#')[0].split('?')[0];
+  var h='<section class="panel"><b>Home screen and one-tap logging</b><div class="mute">Install: in Chrome open the menu (three dots) and tap Install app or Add to Home screen, then open the app from your home screen. Long-press its icon for shortcuts to Today, Skills, Growth and Hunter.</div><div class="mute" style="margin-top:8px">One-tap log: open a link below in Chrome, choose Add to Home screen, and that icon logs the session each time you tap it. These links only work once the app is hosted at its own address.</div>';
+  if(!S.skills.length)return h+'</section>';
+  S.skills.forEach(function(k){
+    h+='<div class="sub"><b>'+esc(k.name)+'</b>';
+    var L=k.mode==='act'?k.acts.slice(0,5).map(function(a){return ['+'+a.st+' '+a.n,k.name+':'+a.n+':'+a.st]}):[15,30,60].map(function(m){return ['+'+m+' min',k.name+':'+m]});
+    L.forEach(function(x){h+='<div class="mute">'+esc(x[0])+'</div><input readonly data-sel="1" value="'+esc(base+'?q='+encodeURIComponent(x[1]))+'" aria-label="Link for '+esc(x[0])+'">'});
+    h+='</div>';
+  });
+  return h+'</section>';
+}
+document.addEventListener('click',function(e){
+  if(e.target.closest('#ov')){el('ov').className='ov';return}
+  var b=e.target.closest('button');if(!b||!b.dataset)return;var d=b.dataset,v,k;
+  if(d.tab){view=d.tab;render();return}
+  if(d.q){v=d.q.split(':');log(v[0],+v[1],1,'')}
+  else if(d.open){el('f'+d.open).classList.toggle('open')}
+  else if(d.save){if(K(d.save).mode==='act')logAct(d.save,+el('a'+d.save).value,el('m'+d.save).value,+el('q'+d.save).value,el('n'+d.save).value);else log(d.save,+el('m'+d.save).value,+el('q'+d.save).value,el('n'+d.save).value)}
+  else if(d.qa){v=d.qa.split(':');var qa=K(v[0]).acts[+v[1]];if(qa)logAct(v[0],+v[1],qa.st,1,'')}
+  else if(d.undo){v=d.undo.split(':');K(v[0]).logs.splice(+v[1],1);afterChange()}
+  else if(d.add){var tv=el('tpl').value,tp=tv==='__count'?CT:T[tv],nm=el('newname').value.trim()||(T[tv]?tv:'');if(!nm)return;S.skills.push(newSkill(nm,tp));afterChange()}
+  else if(d.start){S.timer={id:d.start,start:Date.now()};save();render()}
+  else if(d.cancel){S.timer=null;closeFocus();save();render()}
+  else if(d.focus){openFocus()}
+  else if(d.fx){closeFocus()}
+  else if(d.stop){var fo=el('fl').classList.contains('on'),mins=Math.round((Date.now()-S.timer.start)/60000),q=+el(fo?'fq':'tq').value,nt=el(fo?'fn':'tn').value;S.timer=null;closeFocus();if(mins<1){save();render();return}log(d.stop,mins,q,nt)}
+  else if(d.pass){if(b.dataset.armed){k=K(d.pass);k.bl.push({d:today(),r:k.un+1});k.un++;afterChange()}else{b.dataset.armed='1';b.textContent='Tap again to confirm you passed'}}
+  else if(d.rv){v=d.rv.split(':');K(v[0]).rev.push({w:monday(today()),d:today(),s:+v[1]});afterChange()}
+  else if(d.ssave){k=K(d.ssave);k.sh.push({d:today(),v:k.stats.map(function(s){return s.v})});save();render()}
+  else if(d.del){if(b.dataset.armed){S.skills=S.skills.filter(function(s){return s.id!==d.del});S.skills.forEach(function(s){if(s.par===d.del)s.par=null});if(S.timer&&S.timer.id===d.del)S.timer=null;afterChange()}else{b.dataset.armed='1';b.textContent='Tap again to remove for good'}}
+  else if(d.qs){var wn=el('wname');if(wn&&wn.value.trim())S.name=wn.value.trim();S.skills.push(newSkill(d.qs,T[d.qs]));afterChange()}
+  else if(d.pz){var pk=K(d.pz);pk.pz=!pk.pz;if(!pk.pz)pk.rs=today();afterChange()}
+  else if(d.share){shareCard()}
+  else if(d.csv){var rows=['date,skill,amount,unit,effort,points,note'],qf=function(x){return '"'+String(x==null?'':x).replace(/"/g,'""')+'"'};S.skills.forEach(function(k){k.logs.forEach(function(l){rows.push([l.d,qf(k.name),l.a?l.a.c:l.m,l.a?l.a.u:'min',l.q,l.m,qf(l.note)].join(','))})});var tb=el('backup');tb.value=rows.join('\n');tb.select();el('msg').textContent='Copy this text and paste it into a spreadsheet app.'}
+  else if(d.aadd){K(d.aadd).acts.push({n:'Activity',u:'reps',r:1,st:10});save();render()}
+  else if(d.adel){v=d.adel.split(':');K(v[0]).acts.splice(+v[1],1);save();render()}
+  else if(d.rest){var ra=el('ra').value,rb=el('rb').value;if(ra&&rb&&ra<=rb){S.rests.push({a:ra,b:rb});afterChange()}}
+  else if(d.rdel){S.rests.splice(+d.rdel,1);afterChange()}
+  else if(d.per){rv=d.per;render()}
+  else if(d.print){document.body.classList.add('pr');try{window.print()}catch(x){}}
+  else if(d.exp){var t=el('backup');S.lb=today();save();t.value=JSON.stringify(S);t.select();el('msg').textContent='Backup ready. Copy it and store it safely.'}
+  else if(d.imp){try{var p=JSON.parse(el('backup').value);if(!p||!Array.isArray(p.skills))throw 0;S=migrate(p);applyPace();save();applyDecay();afterChange()}catch(x){el('msg').textContent='That text is not a valid backup.'}}
+});
+document.addEventListener('change',function(e){
+  var t=e.target,d=t.dataset||{},v;
+  if(t.id==='tpl'){el('plan').textContent=T[t.value]?T[t.value].p:t.value==='__count'?CT.p:'Add a custom skill and write your own boss challenges in Details.'}
+  else if(t.id==='hname'){S.name=t.value.trim()||'Hunter';save()}
+  else if(t.id==='dec'){S.set.decay=t.checked;var y=addDays(today(),-1);S.skills.forEach(function(k){k.dt=y});save()}
+  else if(t.id==='snd'){S.set.snd=t.checked;save()}
+  else if(t.id==='zoom'){S.set.zoom=+t.value;save();render()}
+  else if(t.id==='pace'){S.set.pace=t.value;applyPace();afterChange()}
+  else if(t.id==='smart'){S.set.smart=t.checked;if(t.checked)updFactors();save();render()}
+  else if(t.id==='rem'){S.set.remind=t.value;save();banner(calc())}
+  else if(d.boss){v=d.boss.split(':');K(v[0]).boss[+v[1]]=t.value.trim();save()}
+  else if(d.sn){v=d.sn.split(':');K(v[0]).stats[+v[1]].n=t.value.trim()||'Stat';save()}
+  else if(d.qt){K(d.qt).qt=t.value.trim()||'Practice session';save()}
+  else if(d.qm){K(d.qm).qm=Math.max(5,Math.min(240,+t.value||30));save();render()}
+  else if(d.an){var av=d.an.split(':'),ao=K(av[0]).acts[+av[1]],af=av[2];if(ao){if(af==='n'||af==='u')ao[af]=t.value.trim()||ao[af];else ao[af]=Math.max(.01,+t.value||ao[af]);save();render()}}
+  else if(d.wg){K(d.wg).wg=Math.max(0,Math.min(80,+t.value||0));save();render()}
+  else if(d.par){K(d.par).par=t.value||null;afterChange()}
+});
+document.addEventListener('input',function(e){
+  var t=e.target,d=t.dataset||{};
+  if(d.sv){var v=d.sv.split(':');K(v[0]).stats[+v[1]].v=+t.value;t.nextElementSibling.textContent=t.value;save()}
+});
+document.addEventListener('keydown',function(e){if(e.key==='Enter'&&e.target.id==='newname'){var b=document.querySelector('[data-add]');if(b)b.click()}});
+document.addEventListener('toggle',function(e){var t=e.target;if(t.dataset&&t.dataset.det){if(t.open)openD[t.dataset.det]=1;else delete openD[t.dataset.det]}},true);
+window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();dp=e;el('inst').style.display=''});
+window.addEventListener('appinstalled',function(){el('inst').style.display='none'});
+el('inst').addEventListener('click',function(){if(dp){dp.prompt();dp=null;el('inst').style.display='none'}});
+document.addEventListener('focusin',function(e){if(e.target.dataset&&e.target.dataset.sel)e.target.select()});
+el('theme').addEventListener('click',function(){var r=document.documentElement,dark=r.dataset.theme?r.dataset.theme==='dark':window.matchMedia('(prefers-color-scheme: dark)').matches;r.dataset.theme=dark?'light':'dark';render()});
+window.addEventListener('afterprint',function(){document.body.classList.remove('pr')});
+try{window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',render)}catch(e){}
+
+var lastDay=today(),lastMin=-1;
+setInterval(function(){
+  tick();
+  var n=new Date();
+  if(today()!==lastDay){lastDay=today();updFactors();applyDecay();afterChange();return}
+  if(n.getMinutes()!==lastMin){lastMin=n.getMinutes();banner(calc())}
+},1000);
+updFactors();applyDecay();var qmsg=handleParams();afterChange();if(qmsg)say(qmsg);
+try{if('serviceWorker' in navigator&&/^https?:/.test(location.protocol))navigator.serviceWorker.register('sw.js').catch(function(){})}catch(e){}
+})();
+</script>
+</body>
+</html>

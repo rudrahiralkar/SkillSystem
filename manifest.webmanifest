@@ -1,0 +1,21 @@
+{
+  "name": "Skill System",
+  "short_name": "Skills",
+  "description": "Level up your skills like a game.",
+  "start_url": "./?tab=today",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#060b1a",
+  "theme_color": "#060b1a",
+  "icons": [
+    {"src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+    {"src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ],
+  "shortcuts": [
+    {"name": "Today's quests", "short_name": "Today", "url": "./?tab=today", "icons": [{"src": "icon-192.png", "sizes": "192x192"}]},
+    {"name": "Skills and logging", "short_name": "Skills", "url": "./?tab=skills", "icons": [{"src": "icon-192.png", "sizes": "192x192"}]},
+    {"name": "Growth", "short_name": "Growth", "url": "./?tab=growth", "icons": [{"src": "icon-192.png", "sizes": "192x192"}]},
+    {"name": "Hunter card", "short_name": "Hunter", "url": "./?tab=hunter", "icons": [{"src": "icon-192.png", "sizes": "192x192"}]}
+  ]
+}
