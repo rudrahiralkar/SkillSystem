@@ -75,6 +75,8 @@ textarea{width:100%;min-height:90px;background:var(--bg);border:1px solid var(--
 label.mute{display:block}
 @media print{body.pr{--ink:#000;--mute:#444;--line:#999;--bg:#fff;--panel:#fff;background:#fff;color:#000}body.pr main>:not(#app),body.pr #app>:not(.rep){display:none!important}body.pr .rep{box-shadow:none;border:0}body.pr .noprint{display:none!important}}
 #toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--accent);color:var(--on,#fff);padding:12px 18px;border-radius:6px;display:none;z-index:11;max-width:90%;text-align:center}#toast.on{display:block}
+.days{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:12px}.days button{padding:6px 2px;line-height:1.25;min-height:58px;font-size:13px}.days .on{background:var(--accent);color:var(--on,#fff)}.days .td{border-width:3px}
+.ex{padding:10px 0;border-top:1px solid var(--line)}.ex .quick{margin-top:8px}.ex button{min-height:40px;padding:0 12px}.ex button.dn{background:var(--glow)}
 .logo{width:28px;height:28px;vertical-align:-6px;margin-right:8px}input[readonly]{font-size:12px;margin-bottom:6px}
 .ov{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;place-items:center;z-index:9;text-align:center}
 .ov.on{display:grid}
@@ -217,7 +219,7 @@ function dayMaps(k){var m={},w={};k.logs.forEach(function(l){m[l.d]=(m[l.d]||0)+
 function xpBase(k){var w=dayMaps(k).w,t=0;for(var d in w)t+=Math.min(CAP,w[d]);return t}
 function newSkill(nm,tp){return {id:uid(),name:nm,cd:today(),logs:[],rev:[],stats:(tp?tp.s:['Accuracy','Speed','Depth','Consistency']).map(function(n){return {n:n,v:3}}),sh:[],boss:tp?tp.b.slice():['','','','',''],bl:[],qt:tp?tp.q:'Practice session',qm:tp?tp.m:30,plan:tp?tp.p:'',wg:0,wfh:[],mode:tp&&tp.mode?tp.mode:'time',acts:tp&&tp.a?JSON.parse(JSON.stringify(tp.a)):[],hist:[],dec:[],par:null,dt:addDays(today(),-1),un:0,mx:1}}
 function migrate(s){
-  s.v=2;s.name=s.name||'Hunter';s.set=s.set||{decay:true,remind:'20:00'};if(s.set.smart==null)s.set.smart=true;s.rests=s.rests||[];if(!s.set.pace)s.set.pace='standard';if(s.set.snd==null)s.set.snd=true;if(!s.set.zoom)s.set.zoom=1;s.timer=s.timer||null;s.best=s.best||0;
+  s.v=2;s.name=s.name||'Hunter';s.set=s.set||{decay:true,remind:'20:00'};if(s.set.smart==null)s.set.smart=true;s.rests=s.rests||[];if(!s.set.pace)s.set.pace='standard';if(s.set.snd==null)s.set.snd=true;s.plan=s.plan||null;if(s.plan){var q=s.plan;q.holds=q.holds||[];q.done=q.done||{};q.bonus=q.bonus||{};q.feel=q.feel||{};q.skip=q.skip||{};q.rec=q.rec||[]}if(!s.set.zoom)s.set.zoom=1;s.timer=s.timer||null;s.best=s.best||0;
   s.skills.forEach(function(k){
     k.id=k.id||uid();k.logs=k.logs||[];k.cd=k.cd||(k.logs[0]?k.logs[0].d:today());k.rev=k.rev||[];
     k.stats=k.stats||[{n:'Accuracy',v:3},{n:'Speed',v:3},{n:'Depth',v:3},{n:'Consistency',v:3}];
@@ -361,6 +363,7 @@ function card(i){
 function tToday(I){
   var h=status(I),t=today(),wk=monday(t);if(inRest(t))h+='<section class="panel"><b>Rest mode is on</b><div class="mute">Decay is paused and missed days will not break your streaks.</div></section>';
   if(!I.length)return h+'<section class="panel"><h2>Welcome</h2><p>Practise a skill, earn XP, and level up from E rank to S rank. Each rank-up needs a real boss challenge that you set yourself. Quests, streaks and rest days keep you steady. Pick your first skill to begin. You can add more later in the Skills tab.</p><input id="wname" placeholder="Your name (optional)" maxlength="30" style="margin-bottom:10px"><div class="quick">'+Object.keys(T).map(function(n){return '<button data-qs="'+esc(n)+'">'+esc(n)+'</button>'}).join('')+'</div></section>';
+  h+=planToday();
   h+='<section class="panel"><b>Daily quests</b><div class="mute">Finish a quest for +10 XP. Clear every quest in a day for +5 XP more on each skill.</div>';
   I.filter(function(i){return !i.k.pz}).forEach(function(i){var m=Math.round(i.m[t]||0),rq=reqFor(i.k,t),ok=m>=rq;
     h+='<div class="q'+(ok?' ok':'')+'"><span>'+(ok?'Done':'Open')+'</span><div><b>'+esc(i.k.name)+'</b>: '+esc(i.k.qt)+(rq!==i.k.qm?' <span class="mute">(smart target)</span>':'')+'<div class="bar"><i style="width:'+Math.min(100,m/rq*100)+'%"></i></div><span class="mute">'+m+' / '+rq+' '+(i.k.mode==='act'?'XP':'min')+' today</span></div><div class="quick">'+(i.k.mode==='act'?i.k.acts.slice(0,2).map(function(a,ix){return '<button data-qa="'+i.k.id+':'+ix+'">+'+a.st+' '+esc(a.n)+'</button>'}).join(''):'<button data-q="'+i.k.id+':15">+15</button><button data-q="'+i.k.id+':30">+30</button>')+'</div></div>'});
@@ -410,6 +413,7 @@ function titles(I){
   if(I.some(function(i){return i.k.logs.length}))L.unshift('First step');
   [7,30,100].forEach(function(b){if(S.best>=b)L.push(b+'-day streak')});
   if(boss)L.push('Boss slayer');
+  if(S.plan){var pw=weekOf(today());if(pw>=5)L.push('Restart complete');if(pw>=9)L.push('Build phase cleared');if(pw>=13)L.push('Peak phase cleared');if(Object.keys(S.plan.bonus).some(function(k){return k.charAt(0)==='w'}))L.push('Perfect training week')}
   [20,40,60,80].forEach(function(l){if(top>=l)L.push('Rank '+rank(l)+' reached')});
   return {list:L,hrs:hrs};
 }
@@ -438,9 +442,180 @@ function tick(){
 }
 function render(){
   var I=calc();document.documentElement.style.cssText=rkStyle(overall(I).rk);document.body.style.zoom=S.set.zoom||1;if(!S.timer)el('fl').className='fl';banner(I);
-  el('tabs').innerHTML=[['today','Today'],['skills','Skills'],['growth','Growth'],['hunter','Hunter']].map(function(t){return '<button data-tab="'+t[0]+'" class="'+(view===t[0]?'on':'')+'">'+t[1]+'</button>'}).join('');
-  el('app').innerHTML=view==='today'?tToday(I):view==='skills'?tSkills(I):view==='growth'?tGrowth(I):tHunter(I);
+  el('tabs').innerHTML=[['today','Today'],['train','Train'],['skills','Skills'],['growth','Growth'],['hunter','Hunter']].map(function(t){return '<button data-tab="'+t[0]+'" class="'+(view===t[0]?'on':'')+'">'+t[1]+'</button>'}).join('');
+  el('app').innerHTML=view==='today'?tToday(I):view==='train'?tTrain(I):view==='skills'?tSkills(I):view==='growth'?tGrowth(I):tHunter(I);
   tick();
+}
+
+
+var PV={v:null},DN=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],DF=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+var PD={
+0:{t:'Pull-up bar + core',it:[
+['hang','Dead hang','sec',.1,[3,4,4,4],[20,30,45,58],'Shoulders open, breathe steadily, grip relaxed.'],
+['scap','Scapular pull-ups','reps',.4,[3,3,4,0],[6,8,10,0],'Arms stay straight. Squeeze your shoulder blades down and together.'],
+['neg','Negative pull-ups','reps',1.3,[2,3,3,3],[4,5,6,6],'Lower slowly: 3 seconds in weeks 1 and 2, 4 in week 3, 5 from week 4. Elbow tendons are the usual restart injury.'],
+['chin','Chin-up isometric hold','sec',.1,[0,0,3,3],[0,0,15,20],'Hold as long as you can. Aim for these times or more.'],
+['plank','Plank','sec',.06,[3,3,3,4],[20,30,40,50],'Squeeze glutes, brace your core, breathe normally.'],
+['dbug','Dead bug (total reps, both sides)','reps',.25,[2,3,0,0],[12,16,0,0],'Move slowly. Keep your lower back pressed into the floor.'],
+['hollow','Hollow body hold','sec',.06,[0,0,3,3],[0,0,20,25],'Lower back stays on the floor.'],
+['pull','Pull-ups (do negatives if you cannot do one yet)','reps',2,[0,0,0,3],[0,0,0,3],'Full range, clean form.',{mw:5}]]},
+1:{t:'Push + mobility',it:[
+['push',['Incline push-ups','Push-ups','Push-ups','Push-ups'],'reps',.6,[3,3,4,4],[8,10,12,15],'Chest touches the surface. Week 1 starts incline even if you did floor push-ups before.'],
+['wide','Wide push-ups','reps',.65,[0,3,0,0],[0,8,0,0],'Hands wider than your shoulders.'],
+['pike','Pike push-ups','reps',.8,[0,0,3,3],[0,0,8,10],'Shoulder focus.'],
+['diam','Diamond push-ups','reps',.8,[0,0,0,3],[0,0,0,10],'Hands close together under your chest.'],
+['hipf','Hip flexor lunge stretch (total seconds, both sides)','sec',.05,[2,2,2,2],[60,90,90,90],'Hip flexors shorten a lot during time off.'],
+['catc','Cat-cow spine mobility','reps',.2,[2,2,2,0],[10,10,10,0],'Slow and smooth.'],
+['supe','Superman holds','reps',.3,[3,3,0,0],[6,8,0,0],'Hold 2 seconds at the top.'],
+['chst','Doorframe chest stretch (total seconds, both sides)','sec',.05,[2,2,2,0],[60,60,60,0],'Chest muscles shorten during inactivity.'],
+['bal',['','Single-leg balance, eyes open (seconds per leg)','Balance on a folded towel (seconds per leg)','Eyes-closed balance on a towel (seconds per leg)'],'sec',.06,[0,2,2,2],[0,30,20,25],'One set per leg.'],
+['bear','Bear crawl (room lengths)','length',2,[0,0,4,5],[0,0,1,1],'In week 4 go forward and backward.'],
+['dd','Downward dog hold','sec',.06,[0,0,1,0],[0,0,60,0],'Heels need not touch the floor.',{c:0}]]},
+2:{t:'Legs + conditioning',it:[
+['wsq','Squats','reps',.35,[0,0,0,3],[0,0,0,20],'Heels flat, thighs parallel to the floor.',{mw:5}],
+['wlu','Lunges (total reps, both legs)','reps',.35,[0,0,0,2],[0,0,0,20],'Control the way down.',{mw:5}],
+['wbr','Glute bridge','reps',.2,[0,0,0,3],[0,0,0,15],'Drive through your heels.',{mw:5}],
+['wwl','Wall sit','sec',.08,[0,0,0,3],[0,0,0,40],'Back flat on the wall, thighs parallel.',{mw:5}],
+['wcr','Calf raises','reps',.12,[0,0,0,3],[0,0,0,20],'Slow and controlled.',{mw:5}],
+['wbu','Burpees','reps',1.3,[0,0,0,2],[0,0,0,8],'Smooth, not rushed.',{mw:5}],
+['wpl','Plank','sec',.06,[0,0,0,3],[0,0,0,45],'Finish the day strong.',{mw:5}]]},
+3:{t:'Nunchucks + agility',safe:1,it:[
+['wrist','Wrist circles and forearm warm-up','reps',.06,[2,2,2,2],[40,40,40,40],'Non-negotiable after time off.'],
+['fig8',['Figure-8, dominant hand','Figure-8, dominant hand','Figure-8, both hands at good speed','Linked nunchuck movements'],'sec',.06,[3,3,3,3],[40,50,60,60],'Smooth first, speed later.'],
+['fig8n','Figure-8, non-dominant hand','sec',.06,[0,3,0,0],[0,30,0,0],'Slow and smooth.'],
+['grip','Isometric grip hold (seconds per hand)','sec',.06,[0,2,0,3],[0,20,0,30],'Hold the handle tight.'],
+['strk','Strike and catch drills','sec',.08,[0,0,4,0],[0,0,25,0],'They return in week 3 when your wrists and coordination are back.'],
+['vert','Vertical figure-8 (seconds per shoulder)','sec',.06,[0,0,3,3],[0,0,40,40],'Smooth and controlled.'],
+['agil','4-corner floor touch','sec',.2,[3,3,3,0],[25,35,45,0],'Mark 4 corners with socks. Move fast with control.'],
+['bal2',['Single-leg balance, eyes open (seconds per leg)','Single-leg balance, eyes closed (seconds per leg)','',''],'sec',.06,[2,2,0,0],[20,15,0,0],'One set per leg.'],
+['hfin','Dead hang finisher (max hold)','sec',.1,[0,0,3,3],[0,0,30,40],'Record your best time.']]},
+4:{t:'Full body circuit',it:[
+['jack','Jumping jacks','sec',.12,[2,3,0,0],[20,20,0,0],'Land softly on the balls of your feet.',{c:0}],
+['cpsh',['Incline push-ups','Push-ups','Push-up to downward dog',''],'reps',.6,[2,3,3,0],[6,8,8,0],'Full range every rep.',{c:0}],
+['chng','Dead hang','sec',.1,[2,3,3,0],[15,20,20,0],'Grip training inside the circuit.',{c:0}],
+['csq',['Bodyweight squats','Squats with a 2 second hold at the bottom','Squat jumps',''],'reps',.65,[2,3,3,0],[10,10,10,0],'Heels flat, chest up.',{c:0}],
+['cmc','Mountain climbers','sec',.2,[0,3,3,0],[0,20,30,0],'Steady and controlled.',{c:0}],
+['cpl','Plank','sec',.06,[2,0,0,0],[20,0,0,0],'End each round with the plank.',{c:0}],
+['cbur','Burpees','reps',2,[0,0,3,0],[0,0,8,0],'Smooth, not rushed.',{c:0}],
+['dice','Dice AMRAP, 20 minutes (tap each round you finish)','round',5,[0,0,0,12],[0,0,0,1],'Roll a die each round: 1 burpees x10, 2 push-ups x12, 3 mountain climbers 30 s, 4 dead hang max, 5 squat jumps x10, 6 bear crawl one room length. Try to beat your last score.'],
+['nfin','Nunchuck finisher (minutes)','min',2,[0,0,0,1],[0,0,0,8],'8 minutes after the AMRAP.']]},
+5:{t:'Yoga + recovery',it:[
+['y1','Child\u2019s pose','sec',.035,[1,1,1,1],[90,90,90,90],'Start and end here.',{ns:1}],
+['y2','Cat-cow','reps',.2,[1,1,1,1],[10,10,10,10],'One breath per movement.',{ns:1}],
+['y3','Downward facing dog','sec',.035,[1,1,1,1],[45,60,60,60],'Pedal your heels first, then hold still.',{ns:1}],
+['y4','Low lunge (total seconds, both sides)','sec',.035,[1,1,1,1],[120,120,150,150],'Your main hip flexor release.',{ns:1}],
+['y5','Warrior I (total seconds, both sides)','sec',.035,[1,1,1,1],[90,90,90,90],'Strength as much as flexibility.',{ns:1}],
+['y6','Seated forward fold','sec',.035,[1,1,1,1],[90,90,105,105],'Hold wherever you can. Never force it.',{ns:1}],
+['y7','Supine twist (total seconds, both sides)','sec',.035,[1,1,1,1],[120,120,120,120],'Keep both shoulders near the floor.',{ns:1}],
+['y8','Bridge pose (seconds per hold)','sec',.035,[3,3,3,3],[25,25,25,25],'Drive through your heels.',{ns:1}],
+['y9','Legs up the wall','sec',.035,[1,1,1,1],[240,240,240,240],'Do not skip this. It is the main recovery tool in the plan.',{ns:1}]]}
+};
+var RULES=['Cut sets and reps by about 40% in week 1.','Rest 2 full minutes between sets in week 1, then 90 seconds.','Expect soreness on days 2 and 3 of week 1. It is normal. Keep moving lightly.','No max-effort tests in the first 2 weeks.','Nunchucks: go back to basics. Figure-8 only, both hands, slow. Clear a 2 metre radius and wear a fitted shirt.','Yoga every Saturday is mandatory for the 4 restart weeks.','Track every session. Compare week 1 with week 4.'];
+var MET={hang:'Dead hang best (sec)',push:'Push-ups in one set',plank:'Plank best (sec)',pull:'Full pull-ups',amrap:'Dice AMRAP rounds'};
+function weekOf(d){var P=S.plan;if(!P||d<P.start)return 0;var dm=monday(d),n=P.w0+Math.floor(diff(P.sm,dm)/7);P.holds.forEach(function(h){if(h<=dm)n--});return Math.max(P.w0,n)}
+function wf(w){if(w<5)return 1;var b=Math.floor((w-5)/4),p=(w-5)%4,t=[[1.05,1.1,1.15,.9],[1.2,1.25,1.3,.9]];if(b<2)return t[b][p];return 1.3*Math.pow(1.08,b-1)*[1,1.04,1.08,.9][p]}
+function phase(w){
+  if(w<=4)return {ph:'Restart',n:['Wake the body up','Add volume carefully','Rebuild intensity','Return to full programme'][w-1],e:['50%','60%','70 to 75%','80% or more'][w-1],tip:['Finish strong, not exhausted. If you could do another set, stop anyway.','If you are still unusually sore, repeat this week next week.','Push now, but not to your maximum. The muscle memory clicks back this week.','Test week. Go hard and note honestly what is back and what still needs work.'][w-1]};
+  var b=Math.floor((w-5)/4),p=(w-5)%4;
+  return {ph:b===0?'Build':b===1?'Peak':'Endless cycle '+(b-1),n:'Week '+(p+1)+' of 4'+(p===3?', lighter and test week':''),e:b===0?'80 to 85%':b===1?'85 to 90%':'90%',tip:p===3?'Lighter week. Recover, then test your dead hang, push-ups, plank and pull-ups and record them below.':'Targets rise about 5% a week. Add reps only while your form stays clean.'};
+}
+function planDay(w,di){
+  if(di===6||(di===2&&w<5))return {t:di===6?'Full rest':'Rest day',rest:true,items:[]};
+  var B=PD[di],f=wf(w),items=[];
+  B.it.forEach(function(x){
+    var o=x[7]||{},sets=x[4],idx,i;
+    if(o.mw&&w<o.mw)return;
+    if(w<5)idx=w-1;else{idx=-1;for(i=0;i<4;i++)if(sets[i]>0)idx=i;if(idx<0||(o.c===0&&idx<3))return}
+    if(!(sets[idx]>0))return;
+    var u=x[2],a=x[5][idx],r=Array.isArray(x[3])?x[3][idx]:x[3],nm=Array.isArray(x[1])?(x[1][idx]||x[1].filter(Boolean)[0]):x[1],k=1;
+    if(w>=5&&!o.ns&&(u==='sec'||u==='reps')){k=f;a=u==='sec'?Math.round(a*f/5)*5:Math.round(a*f)}
+    items.push({id:x[0],n:nm,u:u,sets:sets[idx],a:a,r:Math.round(r/k*(w>=5?.6:1)*1000)/1000,note:x[6]});
+  });
+  return {t:B.t,safe:!!B.safe,rest:false,items:items};
+}
+function dayProg(d,day){var dn=S.plan.done[d]||{},t=0,c=0,xp=0,xe=0;day.items.forEach(function(it){var n=Math.min(dn[it.id]||0,it.sets);t+=it.sets;c+=n;xp+=it.sets*it.a*it.r;xe+=n*it.a*it.r});return {t:t,c:c,xp:xp,xe:xe}}
+function rmLog(k,tag){for(var i=k.logs.length-1;i>=0;i--)if(k.logs[i].pl===tag){k.logs.splice(i,1);return}}
+function planBonus(d,k){
+  var P=S.plan,w=weekOf(d),di=wd(d),pr=dayProg(d,planDay(w,di)),key='d'+d,full=pr.t>0&&pr.c>=pr.t,wm=monday(d),wk='w'+wm;
+  if(full&&!P.bonus[key]){P.bonus[key]=1;k.logs.push({d:d,m:15,q:1,a:{n:'Workout clear bonus',u:'bonus',c:1},note:'',pl:'b:'+key,t:Date.now()})}
+  if(!full&&P.bonus[key]){delete P.bonus[key];rmLog(k,'b:'+key);if(P.bonus[wk]){delete P.bonus[wk];rmLog(k,'b:'+wk)}}
+  if(!P.bonus[wk]){
+    var need=0,got=0;
+    for(var i=0;i<7;i++){var dd=addDays(wm,i);if(dd<P.start||P.skip[dd])continue;var pd=planDay(weekOf(dd),i);if(pd.rest)continue;need++;if(P.bonus['d'+dd])got++}
+    if(need>0&&got>=need){P.bonus[wk]=1;k.logs.push({d:d,m:40,q:1,a:{n:'Perfect week bonus',u:'bonus',c:1},note:'',pl:'b:'+wk,t:Date.now()})}
+  }
+}
+function planSet(id,idx){
+  var P=S.plan,d=today(),w=weekOf(d),di=wd(d),day=planDay(w,di),k=K(P.sk),it=day.items.filter(function(x){return x.id===id})[0];
+  if(!it||!k)return;
+  var dn=P.done[d]=P.done[d]||{},c=dn[id]||0;
+  if(idx===c&&c<it.sets){dn[id]=c+1;k.logs.push({d:d,m:Math.round(it.a*it.r*10)/10,q:1,a:{n:it.n,u:it.u,c:it.a},note:'Week '+w+' '+DN[di],pl:d+'|'+id,t:Date.now()})}
+  else if(idx===c-1){dn[id]=c-1;rmLog(k,d+'|'+id)}
+  else return;
+  planBonus(d,k);afterChange();
+}
+function planStart(){
+  var w0=+el('plfrom').value,st=el('plwhen').value==='mon'?addDays(monday(today()),7):today(),sk=el('plsk').value,k;
+  if(sk==='new'){k=newSkill('Training',T.Exercise);S.skills.push(k)}else k=K(sk);
+  S.plan={start:st,sm:monday(st),w0:w0,sk:k.id,holds:[],done:{},bonus:{},feel:{},skip:{},rec:[]};
+  view='train';PV.v=null;afterChange();
+}
+function planToday(){
+  var P=S.plan;if(!P)return '';
+  var t=today();
+  if(t<P.start)return '<section class="panel"><b>Training plan</b><div class="mute">Your plan starts on '+esc(P.start)+'.</div></section>';
+  var w=weekOf(t),day=planDay(w,wd(t));
+  if(day.rest||P.skip[t])return '<section class="panel"><b>Training plan: rest day</b><div class="mute">Week '+w+'. Recovery is part of the plan.</div></section>';
+  var pr=dayProg(t,day);
+  return '<section class="panel"><b>Today\u2019s workout</b><div>Week '+w+', '+esc(day.t)+'</div><div class="bar"><i style="width:'+(pr.t?pr.c/pr.t*100:0).toFixed(0)+'%"></i></div><div class="mute">'+pr.c+' of '+pr.t+' sets done</div><div class="quick"><button class="solid" data-tab="train">Open workout</button></div></section>';
+}
+function uLab(u){return u==='length'?'room lengths':u==='round'?'round':u}
+function tTrain(I){
+  var P=S.plan,t=today(),h='';
+  if(!P){
+    var opts=S.skills.filter(function(k){return k.mode==='act'}).map(function(k){return '<option value="'+k.id+'">'+esc(k.name)+'</option>'}).join('');
+    return '<section class="panel"><h2>Home training plan</h2><p>A guided plan for a pull-up bar, floor, nunchucks and yoga. It starts with a 4-week restart (50% up to 80% effort), then moves into Build, Peak and endless 4-week cycles with rising targets and a lighter test week at the end of each cycle.</p><p class="mute">Every set you finish earns XP in your exercise skill. A cleared workout gives +15 XP and a perfect week gives +40 XP. Weeks 1 to 4 follow your restart plan. From week 5 the plan scales those targets up about 5% a week and adds a Wednesday legs session. Stop if anything hurts.</p><label class="mute">Where are you starting?<select id="plfrom"><option value="1">Coming back after a break (4-week restart)</option><option value="5">Already training (start at Build, week 5)</option></select></label><label class="mute">Start date<select id="plwhen"><option value="today">Today</option><option value="mon">Next Monday</option></select></label><label class="mute">Exercise skill that earns the XP<select id="plsk">'+opts+'<option value="new">Create a new skill called Training</option></select></label><div class="quick"><button class="solid" data-pstart="1">Start plan</button></div></section>';
+  }
+  if(t<P.start)return '<section class="panel"><b>Your plan starts on '+esc(P.start)+'</b><div class="mute">Come back then. You can stop the plan below.</div></section>'+planFoot(P);
+  var w=weekOf(t),ph=phase(w),wmon=monday(t);
+  if(PV.v==null)PV.v=wd(t);
+  h+='<section class="panel"><div class="mute">'+esc(ph.ph)+'</div><h2>Week '+w+': '+esc(ph.n)+'</h2><div class="mute">Effort target: '+ph.e+'</div><p>'+esc(ph.tip)+'</p></section><div class="days">';
+  for(var i=0;i<7;i++){
+    var dd=addDays(wmon,i),pw=weekOf(dd),st='\u2013';
+    if(dd>=P.start){var dy=planDay(pw,i);if(dy.rest)st='Rest';else if(P.skip[dd])st='Skip';else{var pg=dayProg(dd,dy);st=pg.t&&pg.c>=pg.t?'Done':pg.c?pg.c+'/'+pg.t:(dd<t?'Missed':'Plan')}}
+    h+='<button data-pd="'+i+'" class="'+(PV.v===i?'on':'quiet')+(dd===t?' td':'')+'" aria-label="'+DF[i]+', '+st+'">'+DN[i]+'<br>'+st+'</button>';
+  }
+  h+='</div>';
+  var sd=addDays(wmon,PV.v),sw=weekOf(sd);
+  if(sd<P.start)return h+'<section class="panel"><b>'+DF[PV.v]+'</b><div class="mute">This day is before your start date.</div></section>'+planFoot(P);
+  var day=planDay(sw,PV.v),isT=sd===t;
+  if(day.rest||P.skip[sd]){
+    h+='<section class="panel"><h2>'+DF[PV.v]+': '+(day.rest?day.t:'Skipped')+'</h2><p>Rest is when your body adapts. Walk lightly or stretch if you like, but do not train.</p>'+(isT&&!day.rest?'<div class="quick"><button data-pskip="1">Undo skip</button></div>':'')+'</section>';
+  }else{
+    var pr=dayProg(sd,day);
+    h+='<section class="panel"><h2>'+DF[PV.v]+': '+esc(day.t)+'</h2>'+(day.safe?'<div class="boss"><b>Safety</b> Clear a 2 metre radius before every nunchuck session. Wear a fitted shirt and keep loose items away.</div>':'')+'<div class="bar"><i style="width:'+(pr.t?pr.c/pr.t*100:0).toFixed(0)+'%"></i></div><div class="mute">'+pr.c+' of '+pr.t+' sets done \u00b7 '+Math.round(pr.xe)+' of about '+Math.round(pr.xp)+' XP'+(isT?'':' \u00b7 you can only log today\u2019s workout')+'</div>';
+    day.items.forEach(function(it){
+      var c=(P.done[sd]||{})[it.id]||0,bt='';
+      for(var j=0;j<it.sets;j++){
+        var dis=!isT||j>c||j<c-1;
+        bt+='<button data-ps="'+it.id+':'+j+'" class="'+(j<c?'dn':'')+'"'+(dis?' disabled':'')+'>'+(it.u==='round'?'Round ':'Set ')+(j+1)+(j<c?' \u2713':'')+'</button>';
+      }
+      h+='<div class="ex"><b>'+esc(it.n)+'</b><div class="mute">'+(it.sets>1?it.sets+' x ':'')+it.a+' '+uLab(it.u)+' \u00b7 about '+Math.round(it.a*it.r)+' XP '+(it.u==='round'?'per round':'per set')+'</div><div class="mute">'+esc(it.note)+'</div><div class="quick">'+bt+'</div></div>';
+    });
+    if(pr.t&&pr.c>=pr.t&&isT){
+      h+='<div class="boss"><b>Workout clear! +15 XP</b><div>How did it feel? (1 to 10)</div><div class="quick">'+[1,2,3,4,5,6,7,8,9,10].map(function(n){return '<button data-pf="'+n+'" class="'+(P.feel[sd]===n?'solid':'')+'">'+n+'</button>'}).join('')+'</div></div>';
+    }else if(isT&&!pr.c)h+='<div class="quick"><button class="quiet" data-pskip="1">Skip today (rest instead)</button></div>';
+    h+='</section>';
+  }
+  // records
+  var best={};P.rec.forEach(function(r){(best[r.k]=best[r.k]||[]).push(r)});
+  h+='<section class="panel"><b>Your records</b><div class="mute">In weeks 1 and 2, record what you did in the workout, never a max test.</div><div class="form open" style="margin-top:8px"><select id="rk">'+Object.keys(MET).map(function(k){return '<option value="'+k+'">'+MET[k]+'</option>'}).join('')+'</select><input type="number" min="1" step="any" id="rv" placeholder="Value"><button class="solid full" data-prec="1">Save record</button></div>';
+  Object.keys(best).forEach(function(k){var a=best[k],f=a[0],l=a[a.length-1];h+='<div class="mute" style="margin-top:6px">'+MET[k]+': '+f.v+' (week '+f.w+') to '+l.v+' (week '+l.w+')'+(a.length>1?', change '+(l.v-f.v>=0?'+':'')+(Math.round((l.v-f.v)*10)/10):'')+'</div>'});
+  h+='</section><section class="panel"><details data-det="rules"'+(openD.rules?' open':'')+'><summary>Restart rules</summary><ol class="mute">'+RULES.map(function(x){return '<li>'+esc(x)+'</li>'}).join('')+'</ol></details></section>'+planFoot(P);
+  return h;
+}
+function planFoot(P){
+  return '<section class="panel"><b>Plan settings</b><div class="mute">Weeks 1 to 4 are your restart plan. Week 5 onward is a progression built on week 4: about 5% more each week, a lighter test week every fourth week, and a Wednesday legs session.</div><div class="quick"><button class="quiet" data-phold="1">Repeat this week next week</button><button class="del" data-pstop="1">Stop the plan</button></div></section>';
 }
 
 function applyPace(){MAXXP={relaxed:150000,standard:100000,fast:60000}[S.set.pace]||100000}
@@ -466,7 +641,7 @@ function say(m){var t=el('toast');t.textContent=m;t.className='on';clearTimeout(
 function handleParams(){
   var p,msg='';try{p=new URLSearchParams(location.search)}catch(e){return ''}
   var tb=p.get('tab'),q=p.get('q');
-  if(['today','skills','growth','hunter'].indexOf(tb)>-1)view=tb;
+  if(['today','train','skills','growth','hunter'].indexOf(tb)>-1)view=tb;
   if(q){
     var last=null;try{last=JSON.parse(localStorage.getItem('ss.lastq'))}catch(e){}
     if(last&&last.q===q&&Date.now()-last.t<10000)msg='That link was just used, so it was not logged twice.';
@@ -508,7 +683,7 @@ document.addEventListener('click',function(e){
   else if(d.open){el('f'+d.open).classList.toggle('open')}
   else if(d.save){if(K(d.save).mode==='act')logAct(d.save,+el('a'+d.save).value,el('m'+d.save).value,+el('q'+d.save).value,el('n'+d.save).value);else log(d.save,+el('m'+d.save).value,+el('q'+d.save).value,el('n'+d.save).value)}
   else if(d.qa){v=d.qa.split(':');var qa=K(v[0]).acts[+v[1]];if(qa)logAct(v[0],+v[1],qa.st,1,'')}
-  else if(d.undo){v=d.undo.split(':');K(v[0]).logs.splice(+v[1],1);afterChange()}
+  else if(d.undo){v=d.undo.split(':');var ul=K(v[0]).logs.splice(+v[1],1)[0];if(ul&&ul.pl&&S.plan){if(ul.pl.indexOf('b:')===0)delete S.plan.bonus[ul.pl.slice(2)];else{var pp=ul.pl.split('|'),pn=S.plan.done[pp[0]];if(pn&&pn[pp[1]]>0)pn[pp[1]]--}}afterChange()}
   else if(d.add){var tv=el('tpl').value,tp=tv==='__count'?CT:T[tv],nm=el('newname').value.trim()||(T[tv]?tv:'');if(!nm)return;S.skills.push(newSkill(nm,tp));afterChange()}
   else if(d.start){S.timer={id:d.start,start:Date.now()};save();render()}
   else if(d.cancel){S.timer=null;closeFocus();save();render()}
@@ -518,7 +693,15 @@ document.addEventListener('click',function(e){
   else if(d.pass){if(b.dataset.armed){k=K(d.pass);k.bl.push({d:today(),r:k.un+1});k.un++;afterChange()}else{b.dataset.armed='1';b.textContent='Tap again to confirm you passed'}}
   else if(d.rv){v=d.rv.split(':');K(v[0]).rev.push({w:monday(today()),d:today(),s:+v[1]});afterChange()}
   else if(d.ssave){k=K(d.ssave);k.sh.push({d:today(),v:k.stats.map(function(s){return s.v})});save();render()}
-  else if(d.del){if(b.dataset.armed){S.skills=S.skills.filter(function(s){return s.id!==d.del});S.skills.forEach(function(s){if(s.par===d.del)s.par=null});if(S.timer&&S.timer.id===d.del)S.timer=null;afterChange()}else{b.dataset.armed='1';b.textContent='Tap again to remove for good'}}
+  else if(d.del){if(b.dataset.armed){S.skills=S.skills.filter(function(s){return s.id!==d.del});if(S.plan&&S.plan.sk===d.del)S.plan=null;S.skills.forEach(function(s){if(s.par===d.del)s.par=null});if(S.timer&&S.timer.id===d.del)S.timer=null;afterChange()}else{b.dataset.armed='1';b.textContent='Tap again to remove for good'}}
+  else if(d.pd){PV.v=+d.pd;render()}
+  else if(d.ps){v=d.ps.split(':');planSet(v[0],+v[1])}
+  else if(d.pf){S.plan.feel[today()]=+d.pf;save();render()}
+  else if(d.pstart){planStart()}
+  else if(d.pskip){var sd=today();if(S.plan.skip[sd])delete S.plan.skip[sd];else S.plan.skip[sd]=1;save();render()}
+  else if(d.prec){var pv=+el('rv').value;if(pv>0){S.plan.rec.push({d:today(),k:el('rk').value,v:pv,w:weekOf(today())});save();render()}}
+  else if(d.phold){if(b.dataset.armed){S.plan.holds.push(addDays(monday(today()),7));save();render()}else{b.dataset.armed='1';b.textContent='Tap again to repeat this week next week'}}
+  else if(d.pstop){if(b.dataset.armed){S.plan=null;save();render()}else{b.dataset.armed='1';b.textContent='Tap again to stop the plan (your XP stays)'}}
   else if(d.qs){var wn=el('wname');if(wn&&wn.value.trim())S.name=wn.value.trim();S.skills.push(newSkill(d.qs,T[d.qs]));afterChange()}
   else if(d.pz){var pk=K(d.pz);pk.pz=!pk.pz;if(!pk.pz)pk.rs=today();afterChange()}
   else if(d.share){shareCard()}

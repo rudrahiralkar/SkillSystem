@@ -15,7 +15,7 @@
   "shortcuts": [
     {"name": "Today's quests", "short_name": "Today", "url": "./?tab=today", "icons": [{"src": "icon-192.png", "sizes": "192x192"}]},
     {"name": "Skills and logging", "short_name": "Skills", "url": "./?tab=skills", "icons": [{"src": "icon-192.png", "sizes": "192x192"}]},
-    {"name": "Growth", "short_name": "Growth", "url": "./?tab=growth", "icons": [{"src": "icon-192.png", "sizes": "192x192"}]},
+    {"name": "Training plan", "short_name": "Train", "url": "./?tab=train", "icons": [{"src": "icon-192.png", "sizes": "192x192"}]},
     {"name": "Hunter card", "short_name": "Hunter", "url": "./?tab=hunter", "icons": [{"src": "icon-192.png", "sizes": "192x192"}]}
   ]
 }
